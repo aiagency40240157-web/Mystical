@@ -1,0 +1,16 @@
+
+> mystical-frontend@0.1.0 dev
+> next dev --port 3001
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 1444ms
+ ○ Compiling /appointments ...
+ ✓ Compiled /appointments in 702ms (570 modules)
+ GET /appointments 200 in 855ms
+ GET /appointments 200 in 69ms
+ GET /appointments 200 in 36ms
+ GET /appointments 200 in 53ms
+ GET /appointments 200 in 40ms

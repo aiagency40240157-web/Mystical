@@ -1,0 +1,16 @@
+{
+  "name": "mystical-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "MVP WhatsApp chatbot powered by Claude AI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "dotenv": "^16.4.5",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.26.0"
+  }
+}

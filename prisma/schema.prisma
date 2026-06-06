@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         String
+  createdAt    DateTime @default(now())
+}
+
+model Client {
+  id                String          @id @default(uuid())
+  firstName         String
+  lastName          String
+  phone             String?
+  email             String?
+  groupColor        String?
+  isKnownRelation   Boolean         @default(false)
+  knownRelationNote String?
+  isVip             Boolean         @default(false)
+  preferredLanguage String          @default("en")
+  noShowCount       Int             @default(0)
+  createdAt         DateTime        @default(now())
+  appointments      Appointment[]
+  waitlistEntries   WaitlistEntry[]
+  payments          Payment[]
+  relationshipsAsA  Relationship[]  @relation("RelationshipA")
+  relationshipsAsB  Relationship[]  @relation("RelationshipB")
+}
+
+model Relationship {
+  id          String   @id @default(uuid())
+  clientAId   String
+  clientBId   String
+  confidence  Float    @default(0)
+  confirmed   Boolean  @default(false)
+  confirmedBy String?
+  createdAt   DateTime @default(now())
+  clientA     Client   @relation("RelationshipA", fields: [clientAId], references: [id])
+  clientB     Client   @relation("RelationshipB", fields: [clientBId], references: [id])
+
+  @@unique([clientAId, clientBId])
+}
+
+model WaitlistEntry {
+  id            String   @id @default(uuid())
+  clientId      String
+  client        Client   @relation(fields: [clientId], references: [id])
+  requestedTime DateTime
+  priority      String   @default("LOW")
+  createdAt     DateTime @default(now())
+}
+
+model Service {
+  id           String        @id @default(uuid())
+  name         String
+  category     String
+  durationMins Int
+  price        Int
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  appointments Appointment[]
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+  serviceId       String?
+  service         Service? @relation(fields: [serviceId], references: [id])
+  startTime       DateTime
+  endTime         DateTime
+  status          String   @default("PENDING_PAYMENT")
+  reminderSent5h  Boolean  @default(false)
+  reminderSent1h  Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  payment         Payment?
+}
+
+model Payment {
+  id                    String      @id @default(uuid())
+  clientId              String
+  client                Client      @relation(fields: [clientId], references: [id])
+  appointmentId         String      @unique
+  appointment           Appointment @relation(fields: [appointmentId], references: [id])
+  amount                Int
+  status                String      @default("PENDING")
+  stripePaymentIntentId String?     @unique
+  createdAt             DateTime    @default(now())
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  action       String
+  metadata     Json
+  hash         String?  @unique
+  previousHash String?
+  createdAt    DateTime @default(now())
+}
