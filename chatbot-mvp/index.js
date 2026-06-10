@@ -57,13 +57,13 @@ const SERVICES_BY_CATEGORY = {
 2. New Client Consulting — 30 min, $75
 3. Aura Photography — 30 min, $50`,
   '2': `*Life Coaching:*
-1. Sesión 30 min — $88
-2. Sesión 60 min — $166
-3. Monthly Packages — consultar en oficina`,
+1. Life Coaching — 30 min — $88
+2. Life Coaching — 60 min — $166
+3. Monthly Package — consultar en oficina`,
   '3': `*Therapeutic Services:*
 1. Chakra Alignment — $175
 2. Sound Vibrational Therapy — $225
-3. Treasure Bliss (EF, SVT, CB, CC, AC) — $475
+3. Treasure Bliss: EF, SVT, CB, CC, AC — $475
 4. Private Sound Bath — $350`,
 };
 
@@ -114,6 +114,7 @@ const TOOLS = [
         firstName: { type: 'string', description: 'Nombre del cliente' },
         lastName:  { type: 'string', description: 'Apellido del cliente. Si no lo proporcionó, usa "Cliente".' },
         startTime: { type: 'string', description: `Fecha y hora en ISO 8601 con offset del Pacífico (California). Ej: para las 3:00 PM PT usa 2026-05-15T15:00:00${pacificOffset()}` },
+        serviceName: { type: 'string', description: 'Nombre EXACTO del servicio que eligió el cliente, tal como aparece en el catálogo (ej: "Chakra Alignment", "Life Coaching — 30 min"). Omítelo solo si el cliente no eligió servicio.' },
       },
       required: ['firstName', 'lastName', 'startTime'],
     },
@@ -158,7 +159,10 @@ async function executeTool(toolName, toolInput, phone) {
       firstName: toolInput.firstName,
       lastName: toolInput.lastName,
       startTime: toolInput.startTime,
+      serviceName: toolInput.serviceName,
     });
+
+    const serviceStr = toolInput.serviceName ? ` (${toolInput.serviceName})` : '';
 
     if (result.status === 'PENDING_PAYMENT' && result.appointmentId) {
       const dateStr = fmtPacificDate(toolInput.startTime);
@@ -166,7 +170,7 @@ async function executeTool(toolName, toolInput, phone) {
       try {
         const paymentResult = await callBackend('POST', '/payments/checkout-session', { appointmentId: result.appointmentId });
         if (paymentResult.checkoutUrl) {
-          return `Cita registrada para ${toolInput.firstName} ${toolInput.lastName} el ${dateStr} a las ${timeStr} (hora del Pacífico). La cita NO está confirmada todavía: para confirmarla, el cliente debe pagar el depósito de $20.91 USD ÚNICAMENTE en este enlace:\n${paymentResult.checkoutUrl}\n\nEn cuanto se realice el pago, la cita quedará confirmada automáticamente. No existe ningún otro método de pago.`;
+          return `Cita registrada para ${toolInput.firstName} ${toolInput.lastName}${serviceStr} el ${dateStr} a las ${timeStr} (hora del Pacífico). La cita NO está confirmada todavía: para confirmarla, el cliente debe pagar el depósito de $20.91 USD ÚNICAMENTE en este enlace:\n${paymentResult.checkoutUrl}\n\nEn cuanto se realice el pago, la cita quedará confirmada automáticamente. No existe ningún otro método de pago.`;
         }
       } catch (e) {
         console.error('Error creating checkout session:', e.message);
@@ -178,7 +182,7 @@ async function executeTool(toolName, toolInput, phone) {
     if (result.status === 'CONFIRMED') {
       const dateStr = fmtPacificDate(toolInput.startTime);
       const timeStr = fmtPacificTime(toolInput.startTime);
-      return `Cita confirmada exitosamente para ${toolInput.firstName} ${toolInput.lastName} el ${dateStr} a las ${timeStr}.`;
+      return `Cita confirmada exitosamente para ${toolInput.firstName} ${toolInput.lastName}${serviceStr} el ${dateStr} a las ${timeStr}.`;
     }
     if (result.status === 'ALTERNATIVES' && result.options?.length > 0) {
       const alts = result.options.map(fmtPacificTime).join(', ');
@@ -245,7 +249,7 @@ FLUJO PARA AGENDAR CITA:
 4. Pregunta qué día prefiere. Si el cliente dice "hoy" o menciona la fecha actual, acepta "hoy" como opción válida — NO lo desvíes a mañana.
 5. Llama a get_availability para ESA fecha y muestra los horarios disponibles.
 6. Cuando el cliente elija un horario de la lista, confirma el resumen (nombre, fecha, hora) y pide confirmación.
-7. Al recibir confirmación, llama INMEDIATAMENTE a book_appointment.
+7. Al recibir confirmación, llama INMEDIATAMENTE a book_appointment incluyendo serviceName con el nombre EXACTO del servicio que eligió (tal como aparece en el catálogo).
 
 REGLAS IMPORTANTES:
 - NUNCA preguntes "¿eres cliente nuevo o existente?". Los nombres de servicios son etiquetas internas.

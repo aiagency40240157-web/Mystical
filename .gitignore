@@ -49,3 +49,9 @@ chatbot-mvp/*.log
 backend-output.txt
 chatbot-error.txt
 chatbot-output.txt
+
+# Frontend build output / logs (Firebase deploys from a fresh `next build`)
+frontend/out/
+frontend/.next/
+frontend/frontend-output.txt
+frontend/*.log

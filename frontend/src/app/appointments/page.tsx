@@ -10,6 +10,7 @@ interface Appointment {
   id: string;
   clientId: string;
   client: { firstName: string; lastName: string };
+  service?: { name: string; price: number } | null;
   startTime: string;
   endTime: string;
   status: string;
@@ -75,6 +76,7 @@ export default function AppointmentsPage() {
             <thead className="bg-slate-50">
               <tr>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Client Name</th>
+                <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Service</th>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Date</th>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Time</th>
                 <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Status</th>
@@ -84,7 +86,7 @@ export default function AppointmentsPage() {
             <tbody>
               {appointments.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500 text-sm">
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500 text-sm">
                     No appointments found.
                   </td>
                 </tr>
@@ -93,6 +95,16 @@ export default function AppointmentsPage() {
                   <tr key={appt.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm text-slate-700">
                       {appt.client.firstName} {appt.client.lastName}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      {appt.service ? (
+                        <>
+                          {appt.service.name}
+                          <span className="text-slate-400"> · ${(appt.service.price / 100).toFixed(0)}</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700">
                       {format(new Date(appt.startTime), 'MMM d, yyyy')}

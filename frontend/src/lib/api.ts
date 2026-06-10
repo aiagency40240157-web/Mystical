@@ -1,4 +1,7 @@
-const BASE = 'http://localhost:3000/api';
+// In production (static export on Firebase Hosting) the default '/api' is
+// rewritten to the backend by firebase.json. In local dev, .env.development
+// points this at http://localhost:3000/api.
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;

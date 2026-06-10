@@ -48,10 +48,34 @@ export class AppointmentsService {
     @Optional() private readonly clientsService: ClientsService,
   ) {}
 
-  async bookViaBot(phone: string, firstName: string, lastName: string, startTime: string): Promise<BookingResponse & { clientId?: string }> {
+  async bookViaBot(
+    phone: string,
+    firstName: string,
+    lastName: string,
+    startTime: string,
+    serviceName?: string,
+  ): Promise<BookingResponse & { clientId?: string }> {
     const client = await this.clientsService.findOrCreateByPhone(phone, firstName, lastName);
-    const result = await this.create({ clientId: client.id, startTime });
+    const serviceId = serviceName ? await this.resolveServiceId(serviceName) : undefined;
+    const result = await this.create({ clientId: client.id, startTime, serviceId });
     return { ...result, clientId: client.id };
+  }
+
+  // Best-effort match of the bot's free-text service name against the catalog.
+  // A booking is never rejected for an unrecognized name — it just stays without service.
+  private async resolveServiceId(serviceName: string): Promise<string | undefined> {
+    const name = serviceName.trim();
+    if (!name) return undefined;
+
+    const exact = await this.prisma.service.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' }, isActive: true },
+    });
+    if (exact) return exact.id;
+
+    const partial = await this.prisma.service.findFirst({
+      where: { name: { contains: name, mode: 'insensitive' }, isActive: true },
+    });
+    return partial?.id;
   }
 
   async create(dto: CreateAppointmentDto): Promise<BookingResponse> {
@@ -69,6 +93,13 @@ export class AppointmentsService {
     const client = await this.prisma.client.findUnique({ where: { id: dto.clientId } });
     if (!client) {
       return { status: 'REJECTED', message: 'Invalid request', options: [] };
+    }
+
+    // Validate the optional service reference; an unknown id is dropped, not fatal.
+    let serviceId: string | undefined;
+    if (dto.serviceId) {
+      const service = await this.prisma.service.findUnique({ where: { id: dto.serviceId } });
+      if (service) serviceId = service.id;
     }
 
     const privacyEnabled = process.env.ENABLE_PRIVACY_ENGINE !== 'false';
@@ -97,6 +128,7 @@ export class AppointmentsService {
           const appt = await tx.appointment.create({
             data: {
               clientId: dto.clientId,
+              serviceId,
               startTime: start,
               endTime: end,
               status: 'PENDING_PAYMENT',
@@ -177,6 +209,7 @@ export class AppointmentsService {
           await tx.appointment.create({
             data: {
               clientId: existing.clientId,
+              serviceId: existing.serviceId,
               startTime: newStart,
               endTime: newEnd,
               status: newStatus,
@@ -251,14 +284,20 @@ export class AppointmentsService {
   findAll() {
     return this.prisma.appointment.findMany({
       orderBy: { startTime: 'asc' },
-      include: { client: { select: { firstName: true, lastName: true } } },
+      include: {
+        client: { select: { firstName: true, lastName: true } },
+        service: { select: { name: true, category: true, price: true, durationMins: true } },
+      },
     });
   }
 
   async findOne(id: string) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
-      include: { client: { select: { firstName: true, lastName: true } } },
+      include: {
+        client: { select: { firstName: true, lastName: true } },
+        service: { select: { name: true, category: true, price: true, durationMins: true } },
+      },
     });
     if (!appointment) throw new NotFoundException('Invalid request');
     return appointment;

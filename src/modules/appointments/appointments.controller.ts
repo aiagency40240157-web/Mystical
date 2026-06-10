@@ -13,8 +13,17 @@ export class AppointmentsController {
   }
 
   @Post('book-via-bot')
-  bookViaBot(@Body() body: { phone: string; firstName: string; lastName: string; startTime: string }) {
-    return this.appointmentsService.bookViaBot(body.phone, body.firstName, body.lastName, body.startTime);
+  bookViaBot(
+    @Body()
+    body: { phone: string; firstName: string; lastName: string; startTime: string; serviceName?: string },
+  ) {
+    return this.appointmentsService.bookViaBot(
+      body.phone,
+      body.firstName,
+      body.lastName,
+      body.startTime,
+      body.serviceName,
+    );
   }
 
   @Get('availability')

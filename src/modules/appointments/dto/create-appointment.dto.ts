@@ -1,4 +1,4 @@
-import { IsISO8601, IsUUID } from 'class-validator';
+import { IsISO8601, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsUUID()
@@ -6,4 +6,8 @@ export class CreateAppointmentDto {
 
   @IsISO8601()
   startTime!: string;
+
+  @IsOptional()
+  @IsUUID()
+  serviceId?: string;
 }

@@ -11,6 +11,13 @@ interface Client {
   lastName: string;
 }
 
+interface Service {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+}
+
 interface BookingResult {
   status: string;
   message?: string;
@@ -24,6 +31,8 @@ function NewAppointmentForm() {
 
   const [clients, setClients] = useState<Client[]>([]);
   const [clientId, setClientId] = useState('');
+  const [services, setServices] = useState<Service[]>([]);
+  const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -36,6 +45,9 @@ function NewAppointmentForm() {
     api.get<Client[]>('/clients')
       .then(setClients)
       .catch(() => setError('Unable to process this request at this time.'));
+    api.get<Service[]>('/services')
+      .then(setServices)
+      .catch(() => { /* service catalog is optional for booking */ });
   }, []);
 
   useEffect(() => {
@@ -70,7 +82,11 @@ function NewAppointmentForm() {
           setLoading(false);
           return;
         }
-        const res = await api.post<BookingResult>('/appointments', { clientId, startTime: selectedSlot });
+        const res = await api.post<BookingResult>('/appointments', {
+          clientId,
+          startTime: selectedSlot,
+          ...(serviceId ? { serviceId } : {}),
+        });
         setResult(res);
       }
     } catch {
@@ -168,6 +184,30 @@ function NewAppointmentForm() {
                     <option key={c.id} value={c.id}>
                       {c.firstName} {c.lastName}
                     </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {!rescheduleId && services.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Service</label>
+                <select
+                  value={serviceId}
+                  onChange={(e) => setServiceId(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">No service selected</option>
+                  {Array.from(new Set(services.map((s) => s.category))).map((cat) => (
+                    <optgroup key={cat} label={cat}>
+                      {services
+                        .filter((s) => s.category === cat)
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} — ${(s.price / 100).toFixed(0)}
+                          </option>
+                        ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
