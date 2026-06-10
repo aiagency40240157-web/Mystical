@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Payment failure simulation tests.
  * Validates: duplicate webhooks, partial payments, failed payments,
  * refund logic, cancellation windows, and idempotent handling.
@@ -50,12 +50,12 @@ function makeService(prismaOverrides: Record<string, unknown> = {}, stripeOverri
 
   // Replace the Stripe instance with the mock
   const stripe = makeStripe(stripeOverrides);
-  Object.assign(service, { stripe, webhookSecret: 'whsec_test' });
+  Object.assign(service, { stripeClient: stripe, webhookSecret: 'whsec_test' });
 
   return { service, prisma, audit, waitlist, stripe };
 }
 
-describe('Payment — createIntent', () => {
+describe('Payment â€” createIntent', () => {
   it('returns clientSecret for valid PENDING_PAYMENT appointment', async () => {
     const { service, prisma } = makeService();
     prisma.appointment.findUnique.mockResolvedValue({
@@ -113,7 +113,7 @@ describe('Payment — createIntent', () => {
   });
 });
 
-describe('Payment — webhook: payment_intent.succeeded', () => {
+describe('Payment â€” webhook: payment_intent.succeeded', () => {
   it('confirms appointment on successful payment with correct amount', async () => {
     const { service, prisma, audit } = makeService();
     prisma.payment.findUnique.mockResolvedValue({
@@ -131,7 +131,7 @@ describe('Payment — webhook: payment_intent.succeeded', () => {
       type: 'payment_intent.succeeded',
       data: { object: { id: 'pi_1', amount_received: DEPOSIT } },
     });
-    Object.assign(service, { stripe, webhookSecret: 'secret' });
+    Object.assign(service, { stripeClient: stripe, webhookSecret: 'secret' });
 
     await service.handleWebhook(Buffer.from('{}'), 'sig');
 
@@ -201,7 +201,7 @@ describe('Payment — webhook: payment_intent.succeeded', () => {
   });
 });
 
-describe('Payment — webhook: payment_intent.payment_failed', () => {
+describe('Payment â€” webhook: payment_intent.payment_failed', () => {
   it('marks payment FAILED and cancels appointment, then promotes waitlist', async () => {
     const { service, prisma, stripe, waitlist } = makeService();
     prisma.payment.findUnique.mockResolvedValue({ id: 'pay-1', appointmentId: 'appt-1', status: 'PENDING' });
@@ -237,7 +237,7 @@ describe('Payment — webhook: payment_intent.payment_failed', () => {
   });
 });
 
-describe('Payment — cancellation refund/penalty rules', () => {
+describe('Payment â€” cancellation refund/penalty rules', () => {
   it('refunds when cancelled >= CANCELLATION_WINDOW_HOURS before appointment', async () => {
     const { service, prisma, stripe } = makeService();
     prisma.payment.findUnique.mockResolvedValue({
@@ -298,7 +298,7 @@ describe('Payment — cancellation refund/penalty rules', () => {
   });
 });
 
-describe('Payment — no-show penalty', () => {
+describe('Payment â€” no-show penalty', () => {
   it('applies PENALTY_APPLIED to a confirmed payment', async () => {
     const { service, prisma, audit } = makeService();
     prisma.payment.findUnique.mockResolvedValue({ id: 'pay-1', status: 'SUCCESS' });
@@ -320,14 +320,14 @@ describe('Payment — no-show penalty', () => {
   });
 });
 
-describe('Payment — webhook signature validation', () => {
+describe('Payment â€” webhook signature validation', () => {
   it('throws BadRequestException on invalid signature', async () => {
     const { service } = makeService();
     const stripe = makeStripe();
     stripe.webhooks.constructEvent.mockImplementation(() => {
       throw new Error('Invalid signature');
     });
-    Object.assign(service, { stripe, webhookSecret: 'secret' });
+    Object.assign(service, { stripeClient: stripe, webhookSecret: 'secret' });
 
     await expect(service.handleWebhook(Buffer.from('{}'), 'bad-sig')).rejects.toThrow();
   });

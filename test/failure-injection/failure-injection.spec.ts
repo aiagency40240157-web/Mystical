@@ -99,7 +99,7 @@ describe('PaymentService — Stripe downtime with retry', () => {
     process.env.STRIPE_SECRET_KEY = savedKey;
 
     Object.assign(service, {
-      stripe: {
+      stripeClient: {
         paymentIntents: { create: jest.fn().mockImplementation(stripeCreateImpl), cancel: jest.fn() },
         refunds: { create: jest.fn() },
         webhooks: { constructEvent: jest.fn() },

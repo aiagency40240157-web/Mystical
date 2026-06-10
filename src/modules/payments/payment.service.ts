@@ -17,7 +17,7 @@ type StripeEvent = {
 
 @Injectable()
 export class PaymentService {
-  private readonly stripe: StripeInstance;
+  private stripeClient: StripeInstance | null = null;
   private readonly webhookSecret: string;
 
   constructor(
@@ -25,10 +25,19 @@ export class PaymentService {
     private readonly auditService: AuditService,
     private readonly waitlistService: WaitlistService,
   ) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-      apiVersion: '2026-04-22.dahlia',
-    });
     this.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
+  }
+
+  // Lazy so the app can boot without STRIPE_SECRET_KEY when payments are disabled
+  private get stripe(): StripeInstance {
+    if (!this.stripeClient) {
+      const apiKey = process.env.STRIPE_SECRET_KEY;
+      if (!apiKey) throw new BadRequestException('Payments are not configured');
+      this.stripeClient = new Stripe(apiKey, {
+        apiVersion: '2026-04-22.dahlia',
+      });
+    }
+    return this.stripeClient;
   }
 
   async createIntent(appointmentId: string): Promise<{ clientSecret: string }> {
