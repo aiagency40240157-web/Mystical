@@ -111,6 +111,8 @@ export class AppointmentsService {
       return this.buildAlternativesOrWaitlist(dto.clientId, start);
     }
 
+    const paymentsEnabled = process.env.ENABLE_PAYMENTS !== 'false';
+
     let appointmentId = '';
     try {
       await this.prisma.$transaction(
@@ -131,7 +133,8 @@ export class AppointmentsService {
               serviceId,
               startTime: start,
               endTime: end,
-              status: 'PENDING_PAYMENT',
+              // Without payments (MVP) there is no deposit step to wait for
+              status: paymentsEnabled ? 'PENDING_PAYMENT' : 'CONFIRMED',
             },
           });
           appointmentId = appt.id;
@@ -146,7 +149,9 @@ export class AppointmentsService {
       if (process.env.ENABLE_AUDIT !== 'false') {
         this.auditService.log('APPOINTMENT_CREATED', { clientId: dto.clientId, startTime: start.toISOString() });
       }
-      return { status: 'PENDING_PAYMENT', message: 'Payment required to confirm appointment', options: [], appointmentId };
+      return paymentsEnabled
+        ? { status: 'PENDING_PAYMENT', message: 'Payment required to confirm appointment', options: [], appointmentId }
+        : { status: 'CONFIRMED', message: 'Appointment confirmed', options: [], appointmentId };
     }
 
     return this.buildAlternativesOrWaitlist(dto.clientId, start);
@@ -185,7 +190,7 @@ export class AppointmentsService {
     const paidAlready =
       existing.status === 'CONFIRMED' ||
       (paymentsEnabled && (await this.paymentService.hasSuccessfulPayment(existing.id)));
-    const newStatus = paidAlready ? 'CONFIRMED' : 'PENDING_PAYMENT';
+    const newStatus = paidAlready || !paymentsEnabled ? 'CONFIRMED' : 'PENDING_PAYMENT';
 
     let rescheduled = false;
     try {

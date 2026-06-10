@@ -67,7 +67,13 @@ export class WaitlistService {
         if (conflict) return;
 
         await tx.appointment.create({
-          data: { clientId: entry.clientId, startTime, endTime, status: 'PENDING_PAYMENT' },
+          data: {
+            clientId: entry.clientId,
+            startTime,
+            endTime,
+            // Without payments (MVP) there is no deposit step to wait for
+            status: process.env.ENABLE_PAYMENTS !== 'false' ? 'PENDING_PAYMENT' : 'CONFIRMED',
+          },
         });
         await tx.waitlistEntry.delete({ where: { id: entry.id } });
         promoted = true;
