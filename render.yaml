@@ -3,7 +3,7 @@ services:
     name: mystical-backend
     runtime: node
     plan: free
-    region: ohio
+    region: oregon
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && node dist/main
     healthCheckPath: /api/health
