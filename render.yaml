@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: mystical-backend
+    runtime: node
+    plan: free
+    region: ohio
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/main
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://mystical-scheduling-2026.web.app,https://mystical-scheduling-2026.firebaseapp.com,http://localhost:3001
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_KEY_MANAGER
+        generateValue: true
+      - key: API_KEY_AGENT
+        generateValue: true
+      - key: API_KEY_ASSISTANT
+        generateValue: true
+      - key: API_KEY_SYSTEM
+        generateValue: true
+      - key: ENABLE_PRIVACY_ENGINE
+        value: "true"
+      - key: ENABLE_AUDIT
+        value: "true"
+      - key: ENABLE_WAITLIST
+        value: "true"
+      - key: ENABLE_PAYMENTS
+        value: "false"
+      - key: CANCELLATION_WINDOW_HOURS
+        value: "24"
