@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY, ROLES_KEY } from '../decorators/roles.decorator';
@@ -47,15 +47,18 @@ export class RolesGuard implements CanActivate {
 
     const authorization = headers['authorization'];
     if (authorization?.startsWith('Bearer ')) {
+      let payload: { role: string };
       try {
         const token = authorization.slice(7);
-        const payload = this.jwtService.verify<{ role: string }>(token, {
+        payload = this.jwtService.verify<{ role: string }>(token, {
           secret: process.env.JWT_SECRET ?? 'changeme-set-JWT_SECRET-in-env',
         });
-        return !!payload.role && requiredRoles.includes(payload.role);
       } catch {
-        return false;
+        // Missing/expired/forged token → 401 so the client re-authenticates,
+        // distinct from a valid token lacking the role (403 below).
+        throw new UnauthorizedException('Invalid or expired token');
       }
+      return !!payload.role && requiredRoles.includes(payload.role);
     }
 
     return false;

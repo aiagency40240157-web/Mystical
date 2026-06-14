@@ -49,22 +49,23 @@ export default function DashboardPage() {
   const [month, setMonth] = useState(() => new Date());
 
   useEffect(() => {
-    async function load() {
-      try {
-        const today = format(new Date(), 'yyyy-MM-dd');
-        const [sum, appts] = await Promise.all([
-          api.get<AnalyticsSummary>(`/analytics/summary?date=${today}`),
-          api.get<Appointment[]>('/appointments'),
-        ]);
-        setSummary(sum);
-        setAppointments(appts);
-      } catch {
-        setError('Unable to process this request at this time.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    const today = format(new Date(), 'yyyy-MM-dd');
+    let pending = 2;
+    const done = () => {
+      if (--pending === 0) setLoading(false);
+    };
+    // Loaded independently so a failure in one panel doesn't blank the other.
+    // A 401 (expired token) is handled by the api layer, which redirects to login.
+    api
+      .get<AnalyticsSummary>(`/analytics/summary?date=${today}`)
+      .then(setSummary)
+      .catch(() => {})
+      .finally(done);
+    api
+      .get<Appointment[]>('/appointments')
+      .then(setAppointments)
+      .catch(() => setError('Unable to process this request at this time.'))
+      .finally(done);
   }, []);
 
   // Active appointments grouped by local calendar day (yyyy-MM-dd).
