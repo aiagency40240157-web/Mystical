@@ -64,19 +64,18 @@ function NewAppointmentForm() {
       .finally(() => setSlotsLoading(false));
   }, [date]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedSlot) {
-      setError('Please select a time slot.');
-      return;
-    }
+  // Books/reschedules a specific slot. Used by the main button (selectedSlot)
+  // and by the suggested-alternative buttons (which pass their own slot so a
+  // single click acts on them directly).
+  async function submitBooking(slot: string) {
     setError('');
+    setSelectedSlot(slot);
     setLoading(true);
     try {
       if (rescheduleId) {
         const res = await api.post<BookingResult>(
           `/appointments/${rescheduleId}/reschedule`,
-          { newStartTime: selectedSlot },
+          { newStartTime: slot },
         );
         // The backend always replies 200; the real outcome is in res.status.
         if (res.status === 'RESCHEDULED') {
@@ -92,7 +91,7 @@ function NewAppointmentForm() {
         }
         const res = await api.post<BookingResult>('/appointments', {
           clientId,
-          startTime: selectedSlot,
+          startTime: slot,
           ...(serviceId ? { serviceId } : {}),
         });
         setResult(res);
@@ -102,6 +101,15 @@ function NewAppointmentForm() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedSlot) {
+      setError('Please select a time slot.');
+      return;
+    }
+    await submitBooking(selectedSlot);
   }
 
   function renderResult() {
@@ -119,14 +127,16 @@ function NewAppointmentForm() {
         return (
           <div className="bg-blue-50 border border-blue-200 rounded-md px-4 py-4 mt-4">
             <p className="text-blue-800 text-sm font-medium mb-3">
-              That time is not available. Available alternatives:
+              That time is not available. Tap an alternative to {rescheduleId ? 'reschedule' : 'book'} it:
             </p>
             <div className="flex flex-wrap gap-2">
               {result.options?.map((opt) => (
                 <button
                   key={opt}
-                  onClick={() => setSelectedSlot(opt)}
-                  className="bg-white border border-blue-300 text-blue-700 px-3 py-1.5 rounded-md text-sm hover:bg-blue-100 transition-colors"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => submitBooking(opt)}
+                  className="bg-white border border-blue-300 text-blue-700 px-3 py-1.5 rounded-md text-sm hover:bg-blue-100 disabled:opacity-50 transition-colors"
                 >
                   {format(new Date(opt), 'MMM d, HH:mm')}
                 </button>
