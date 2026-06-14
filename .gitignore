@@ -55,3 +55,4 @@ frontend/out/
 frontend/.next/
 frontend/frontend-output.txt
 frontend/*.log
+.firebase/
