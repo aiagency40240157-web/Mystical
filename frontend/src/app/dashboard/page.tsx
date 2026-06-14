@@ -1,8 +1,18 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+} from 'date-fns';
 import AppLayout from '@/components/AppLayout';
-import StatusBadge from '@/components/StatusBadge';
 import { api } from '@/lib/api';
 
 interface AnalyticsSummary {
@@ -18,16 +28,25 @@ interface Appointment {
   id: string;
   clientId: string;
   client: { firstName: string; lastName: string };
+  service?: { name: string } | null;
   startTime: string;
   endTime: string;
   status: string;
 }
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const pillStyle: Record<string, string> = {
+  CONFIRMED: 'bg-green-100 text-green-800',
+  PENDING_PAYMENT: 'bg-yellow-100 text-yellow-800',
+};
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [month, setMonth] = useState(() => new Date());
 
   useEffect(() => {
     async function load() {
@@ -38,10 +57,7 @@ export default function DashboardPage() {
           api.get<Appointment[]>('/appointments'),
         ]);
         setSummary(sum);
-        const todayAppts = appts
-          .filter((a) => a.startTime.startsWith(today))
-          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-        setAppointments(todayAppts);
+        setAppointments(appts);
       } catch {
         setError('Unable to process this request at this time.');
       } finally {
@@ -51,6 +67,28 @@ export default function DashboardPage() {
     load();
   }, []);
 
+  // Active appointments grouped by local calendar day (yyyy-MM-dd).
+  const byDay = useMemo(() => {
+    const map = new Map<string, Appointment[]>();
+    for (const a of appointments) {
+      if (a.status === 'CANCELLED' || a.status === 'NO_SHOW') continue;
+      const key = format(new Date(a.startTime), 'yyyy-MM-dd');
+      const list = map.get(key);
+      if (list) list.push(a);
+      else map.set(key, [a]);
+    }
+    map.forEach((list) => {
+      list.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    });
+    return map;
+  }, [appointments]);
+
+  const days = useMemo(() => {
+    const gridStart = startOfWeek(startOfMonth(month));
+    const gridEnd = endOfWeek(endOfMonth(month));
+    return eachDayOfInterval({ start: gridStart, end: gridEnd });
+  }, [month]);
+
   const statCards = summary
     ? [
         { label: 'Appointments Today', value: summary.appointmentsToday },
@@ -59,6 +97,14 @@ export default function DashboardPage() {
         { label: 'Waitlist Count', value: summary.waitlistCount },
       ]
     : [];
+
+  const today = new Date();
+  const monthCount = appointments.filter(
+    (a) =>
+      a.status !== 'CANCELLED' &&
+      a.status !== 'NO_SHOW' &&
+      isSameMonth(new Date(a.startTime), month),
+  ).length;
 
   return (
     <AppLayout>
@@ -84,41 +130,100 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Today&apos;s Appointments
-              </h2>
-            </div>
-            {appointments.length === 0 ? (
-              <div className="px-6 py-8 text-center text-slate-500 text-sm">
-                No appointments scheduled for today.
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-slate-900">{format(month, 'MMMM yyyy')}</h2>
+                <span className="text-xs text-slate-500">
+                  {monthCount} appointment{monthCount === 1 ? '' : 's'}
+                </span>
               </div>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Client</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Time</th>
-                    <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointments.map((appt) => (
-                    <tr key={appt.id} className="border-b border-slate-100 hover:bg-slate-50">
-                      <td className="px-4 py-3 text-sm text-slate-700">
-                        {appt.client.firstName} {appt.client.lastName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700">
-                        {format(new Date(appt.startTime), 'HH:mm')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={appt.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setMonth((m) => subMonths(m, 1))}
+                  className="px-2.5 py-1.5 rounded-md text-sm text-slate-600 hover:bg-slate-100"
+                  aria-label="Previous month"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => setMonth(new Date())}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setMonth((m) => addMonths(m, 1))}
+                  className="px-2.5 py-1.5 rounded-md text-sm text-slate-600 hover:bg-slate-100"
+                  aria-label="Next month"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 border-b border-slate-100">
+              {WEEKDAYS.map((wd) => (
+                <div key={wd} className="px-2 py-2 text-center text-xs font-medium text-slate-500 uppercase">
+                  {wd}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7">
+              {days.map((day) => {
+                const key = format(day, 'yyyy-MM-dd');
+                const dayAppts = byDay.get(key) ?? [];
+                const inMonth = isSameMonth(day, month);
+                const isToday = isSameDay(day, today);
+                return (
+                  <div
+                    key={key}
+                    className={`min-h-[7rem] border-b border-r border-slate-100 p-1.5 align-top ${
+                      inMonth ? 'bg-white' : 'bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex justify-end">
+                      <span
+                        className={`inline-flex items-center justify-center text-xs w-6 h-6 rounded-full ${
+                          isToday
+                            ? 'bg-indigo-600 text-white font-semibold'
+                            : inMonth
+                            ? 'text-slate-700'
+                            : 'text-slate-300'
+                        }`}
+                      >
+                        {format(day, 'd')}
+                      </span>
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {dayAppts.slice(0, 3).map((a) => (
+                        <div
+                          key={a.id}
+                          title={`${a.client.firstName} ${a.client.lastName}${a.service ? ` · ${a.service.name}` : ''} · ${a.status.replace(/_/g, ' ')}`}
+                          className={`truncate rounded px-1 py-0.5 text-[11px] leading-tight font-medium ${
+                            pillStyle[a.status] ?? 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {format(new Date(a.startTime), 'HH:mm')} {a.client.firstName} {a.client.lastName}
+                        </div>
+                      ))}
+                      {dayAppts.length > 3 && (
+                        <div className="text-[11px] text-slate-500 px-1">+{dayAppts.length - 3} more</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="px-6 py-3 flex items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Confirmed
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" /> Pending payment
+              </span>
+            </div>
           </div>
         </>
       )}
