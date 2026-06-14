@@ -74,8 +74,16 @@ function NewAppointmentForm() {
     setLoading(true);
     try {
       if (rescheduleId) {
-        await api.post(`/appointments/${rescheduleId}/reschedule`, { newStartTime: selectedSlot });
-        router.push('/appointments');
+        const res = await api.post<BookingResult>(
+          `/appointments/${rescheduleId}/reschedule`,
+          { newStartTime: selectedSlot },
+        );
+        // The backend always replies 200; the real outcome is in res.status.
+        if (res.status === 'RESCHEDULED') {
+          router.push('/appointments');
+        } else {
+          setResult(res);
+        }
       } else {
         if (!clientId) {
           setError('Please select a client.');

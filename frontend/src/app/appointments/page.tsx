@@ -47,7 +47,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  const cancellable = (status: string) =>
+  const actionable = (status: string) =>
     status === 'PENDING_PAYMENT' || status === 'CONFIRMED';
 
   return (
@@ -116,20 +116,24 @@ export default function AppointmentsPage() {
                       <StatusBadge status={appt.status} />
                     </td>
                     <td className="px-4 py-3 text-sm space-x-2">
-                      {cancellable(appt.status) && (
-                        <button
-                          onClick={() => handleCancel(appt.id)}
-                          className="text-red-600 hover:text-red-800 font-medium"
-                        >
-                          Cancel
-                        </button>
+                      {actionable(appt.status) ? (
+                        <>
+                          <button
+                            onClick={() => handleCancel(appt.id)}
+                            className="text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Cancel
+                          </button>
+                          <Link
+                            href={`/appointments/new?reschedule=${appt.id}`}
+                            className="text-indigo-600 hover:text-indigo-800 font-medium"
+                          >
+                            Reschedule
+                          </Link>
+                        </>
+                      ) : (
+                        <span className="text-slate-400">—</span>
                       )}
-                      <Link
-                        href={`/appointments/new?reschedule=${appt.id}`}
-                        className="text-indigo-600 hover:text-indigo-800 font-medium"
-                      >
-                        Reschedule
-                      </Link>
                     </td>
                   </tr>
                 ))
