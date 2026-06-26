@@ -368,13 +368,15 @@ async function main() {
 
   waClient.on('qr', qr => {
     const fs = require('fs');
+    const qrTerminal = require('qrcode-terminal');
     const qrImagePath = path.join(__dirname, 'qr.png');
     fs.writeFileSync(path.join(__dirname, 'qr-data.txt'), qr, 'utf8');
     QRCode.toFile(qrImagePath, qr, { width: 400, margin: 2 }, (err) => {
       if (err) { console.error('❌  Error generando QR:', err.message); return; }
       console.log(`📷  QR generado → ${qrImagePath}`);
-      console.log('📱  Escanea el QR con WhatsApp para iniciar sesión.');
     });
+    console.log('📱  Escanea el QR con WhatsApp:');
+    qrTerminal.generate(qr, { small: true });
   });
 
   waClient.on('authenticated', () => {
