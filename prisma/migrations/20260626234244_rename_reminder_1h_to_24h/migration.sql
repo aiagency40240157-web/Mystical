@@ -1,0 +1,1 @@
+ALTER TABLE "Appointment" RENAME COLUMN "reminderSent1h" TO "reminderSent24h";

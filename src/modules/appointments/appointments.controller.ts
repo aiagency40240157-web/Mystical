@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
@@ -24,6 +24,16 @@ export class AppointmentsController {
       body.startTime,
       body.serviceName,
     );
+  }
+
+  @Get('pending-reminders')
+  getPendingReminders(@Query('window') window: '24h' | '5h') {
+    return this.appointmentsService.getPendingReminders(window ?? '24h');
+  }
+
+  @Patch(':id/reminder-sent')
+  markReminderSent(@Param('id') id: string, @Body() body: { window: '24h' | '5h' }) {
+    return this.appointmentsService.markReminderSent(id, body.window ?? '24h');
   }
 
   @Get('availability')

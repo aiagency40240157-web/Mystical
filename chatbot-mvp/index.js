@@ -122,6 +122,49 @@ async function executeTool(toolName, toolInput, phone) {
     return `Horarios disponibles: ${formatted}`;
   }
 
+  if (toolName === 'confirm_appointment') {
+    try {
+      const appt = await callBackend('GET', `/appointments/${toolInput.appointmentId}`, null);
+      if (!appt || !appt.id) return 'No se encontró la cita. Por favor comunícate directamente con el spa.';
+      const dateStr = fmtPacificDate(appt.startTime);
+      const timeStr = fmtPacificTime(appt.startTime);
+      return `✅ Tu asistencia está confirmada para el ${dateStr} a las ${timeStr}. ¡Te esperamos en Munay Bliss!`;
+    } catch {
+      return 'No se pudo verificar la cita. Por favor comunícate directamente con el spa.';
+    }
+  }
+
+  if (toolName === 'cancel_appointment') {
+    try {
+      const result = await callBackend('POST', `/appointments/${toolInput.appointmentId}/cancel`, {});
+      if (result.status === 'CANCELLED') {
+        return '✅ Tu cita ha sido cancelada exitosamente. ¿Deseas agendar una nueva cita en otro momento?';
+      }
+      return `No se pudo cancelar la cita: ${result.message || 'inténtalo de nuevo'}`;
+    } catch {
+      return 'Error al cancelar la cita. Por favor comunícate directamente con el spa.';
+    }
+  }
+
+  if (toolName === 'reschedule_appointment') {
+    const result = await callBackend('POST', `/appointments/${toolInput.appointmentId}/reschedule`, {
+      newStartTime: toolInput.newStartTime,
+    });
+    if (result.status === 'RESCHEDULED') {
+      const dateStr = fmtPacificDate(toolInput.newStartTime);
+      const timeStr = fmtPacificTime(toolInput.newStartTime);
+      return `✅ Cita reagendada exitosamente para el ${dateStr} a las ${timeStr}.`;
+    }
+    if (result.status === 'ALTERNATIVES' && result.options?.length > 0) {
+      const alts = result.options.map(fmtPacificTime).join(', ');
+      return `Ese horario no está disponible. Horarios alternativos: ${alts}`;
+    }
+    if (result.status === 'WAITLIST') {
+      return 'Ese horario no está disponible. El cliente fue agregado a la lista de espera.';
+    }
+    return `No se pudo reagendar: ${result.message || 'horario no disponible'}`;
+  }
+
   if (toolName === 'book_appointment') {
     const result = await callBackend('POST', '/appointments/book-via-bot', {
       phone,
@@ -222,6 +265,18 @@ Tienes acceso a herramientas para consultar disponibilidad y registrar citas en 
 - Usa get_availability antes de mostrar horarios o confirmar.
 - Cuando confirmes una cita, dile al cliente el día y hora exactos en formato corto.
 
+FLUJO PARA RESPUESTAS A RECORDATORIOS:
+El sistema envía recordatorios automáticos 24 horas y 5 horas antes de cada cita. Cuando el cliente responde a un recordatorio, el historial de conversación contiene una nota del tipo [RECORDATORIO PENDIENTE — appointmentId: <id> — fecha: ...]. Usa ese appointmentId para las acciones:
+
+- Si el cliente responde "1", "confirmar", "sí", "ahí estaré" o similar → llama INMEDIATAMENTE a confirm_appointment con ese appointmentId.
+- Si el cliente responde "2", "cancelar", "no puedo" o similar → llama INMEDIATAMENTE a cancel_appointment con ese appointmentId.
+- Si el cliente responde "3", "reagendar", "cambiar fecha" o similar →
+  1. Pregunta: "¿Para qué día quieres reagendar tu cita?"
+  2. Cuando dé el día, llama a get_availability para esa fecha y muestra los horarios disponibles.
+  3. Cuando elija un horario, confirma el resumen y llama a reschedule_appointment con el appointmentId original y el newStartTime elegido.
+
+IMPORTANTE: Cuando el cliente quiere reagendar, NUNCA procesas el reagendamiento sin primero consultar disponibilidad con get_availability. El cliente debe elegir un horario disponible antes de llamar a reschedule_appointment.
+
 ⚠️ REGLA CRÍTICA — NUNCA INVENTES UNA CONFIRMACIÓN:
 JAMÁS digas "cita confirmada", "agendada", "registrada", "reservada" o equivalentes SIN HABER LLAMADO PRIMERO al tool book_appointment y haber recibido un resultado exitoso del sistema.
 
@@ -273,8 +328,46 @@ function makeToolSchemas() {
         required: ['date'],
       },
     },
+    {
+      name: 'confirm_appointment',
+      description: 'Confirma la asistencia del cliente a una cita existente. Úsalo cuando el cliente confirme que va a asistir (responde "1", "confirmar", "sí", etc.) en respuesta a un recordatorio.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          appointmentId: { type: 'string', description: 'ID de la cita a confirmar (se encuentra en el historial de conversación como [RECORDATORIO PENDIENTE])' },
+        },
+        required: ['appointmentId'],
+      },
+    },
+    {
+      name: 'cancel_appointment',
+      description: 'Cancela una cita existente. Úsalo cuando el cliente quiera cancelar (responde "2", "cancelar", "no puedo ir", etc.) en respuesta a un recordatorio.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          appointmentId: { type: 'string', description: 'ID de la cita a cancelar' },
+        },
+        required: ['appointmentId'],
+      },
+    },
+    {
+      name: 'reschedule_appointment',
+      description: 'Reagenda una cita existente a una nueva fecha y hora. Úsalo cuando el cliente ya eligió el nuevo horario y confirmó el reagendamiento.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          appointmentId: { type: 'string', description: 'ID de la cita original a reagendar' },
+          newStartTime: { type: 'string', description: `Nueva fecha y hora en ISO 8601 con offset del Pacífico. Ej: 2026-07-01T10:00:00${pacificOffset()}` },
+        },
+        required: ['appointmentId', 'newStartTime'],
+      },
+    },
   ];
 }
+
+// ── WhatsApp client (module-level so reminder poller can access it) ──────────
+let waClient = null;
+let waClientReady = false;
 
 // ── Session management ────────────────────────────────────────────────────────
 // Map<chatId, Agent> — one Agent per chat session, tools close over `phone`
@@ -325,6 +418,51 @@ function getOrCreateAgent(chatId, phone) {
   return agent;
 }
 
+// ── Reminder polling ─────────────────────────────────────────────────────────
+async function sendPendingReminders(window) {
+  try {
+    const appointments = await callBackend('GET', `/appointments/pending-reminders?window=${window}`, null);
+    if (!Array.isArray(appointments) || appointments.length === 0) return;
+
+    for (const appt of appointments) {
+      const phone = appt.client?.phone;
+      if (!phone) continue;
+
+      const chatId = `${phone}@c.us`;
+      const dateStr = fmtPacificDate(appt.startTime);
+      const timeStr = fmtPacificTime(appt.startTime);
+      const name = appt.client.firstName;
+      const serviceNote = appt.service?.name ? `\n🌿 Servicio: ${appt.service.name}` : '';
+
+      const label = window === '24h' ? 'mañana' : 'en 5 horas';
+      const message =
+        `🌸 *Recordatorio de cita — Munay Bliss LLC*\n\n` +
+        `Hola ${name}! Tienes una cita *${label}*:\n` +
+        `📅 ${dateStr}\n🕐 ${timeStr}${serviceNote}\n\n` +
+        `¿Qué deseas hacer?\n` +
+        `1️⃣ Confirmar asistencia\n` +
+        `2️⃣ Cancelar cita\n` +
+        `3️⃣ Reagendar cita`;
+
+      await waClient.sendMessage(chatId, message);
+
+      // Inject appointment context into session so Claude knows which cita when client replies
+      const history = await fileMemory.load(chatId);
+      const contextNote = `[RECORDATORIO PENDIENTE — appointmentId: ${appt.id} — fecha: ${dateStr} a las ${timeStr}]`;
+      await fileMemory.save(chatId, [
+        ...history,
+        { role: 'user', content: '[recordatorio automático enviado por el sistema]' },
+        { role: 'assistant', content: contextNote },
+      ]);
+
+      await callBackend('PATCH', `/appointments/${appt.id}/reminder-sent`, { window });
+      console.log(`📅 Recordatorio ${window} → ${phone} (cita ${appt.id})`);
+    }
+  } catch (err) {
+    console.error(`❌ Error en recordatorios ${window}:`, err.message);
+  }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function isAllowed(from) {
   if (ALLOWED_NUMBERS.length === 0) return true;
@@ -357,7 +495,7 @@ async function main() {
   console.log(`✅  agency-runtime cargado. Sessions dir: ${SESSIONS_DIR}`);
 
   // ── WhatsApp client ────────────────────────────────────────────────────────
-  const waClient = new Client({
+  waClient = new Client({
     authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
     puppeteer: {
       headless: true,
@@ -392,6 +530,7 @@ async function main() {
   });
 
   waClient.on('ready', () => {
+    waClientReady = true;
     console.log(`\n✅  Bot listo. Modelo: ${CLAUDE_MODEL}`);
     console.log(`📋  Personalidad: ${BOT_PERSONALITY.slice(0, 80)}...`);
     if (ALLOWED_NUMBERS.length > 0) {
@@ -400,6 +539,14 @@ async function main() {
       console.log('🌐  Responde a TODOS los chats');
     }
     console.log('\nEsperando mensajes...\n');
+
+    // Poll for pending reminders every 5 minutes
+    setInterval(async () => {
+      if (!waClientReady) return;
+      await sendPendingReminders('24h');
+      await sendPendingReminders('5h');
+    }, 5 * 60 * 1000);
+    console.log('⏰  Polling de recordatorios activo (cada 5 min)');
   });
 
   waClient.on('message', async msg => {

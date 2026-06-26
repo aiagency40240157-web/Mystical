@@ -286,6 +286,36 @@ export class AppointmentsService {
     return { status: 'CANCELLED', message: 'No-show recorded', options: [] };
   }
 
+  async getPendingReminders(window: '24h' | '5h') {
+    const ms = window === '24h' ? 24 * 60 * 60 * 1000 : 5 * 60 * 60 * 1000;
+    const target = new Date(Date.now() + ms);
+    const tolerance = 5 * 60 * 1000;
+    const where =
+      window === '24h'
+        ? {
+            status: 'CONFIRMED',
+            reminderSent24h: false,
+            startTime: { gte: new Date(target.getTime() - tolerance), lte: new Date(target.getTime() + tolerance) },
+          }
+        : {
+            status: 'CONFIRMED',
+            reminderSent5h: false,
+            startTime: { gte: new Date(target.getTime() - tolerance), lte: new Date(target.getTime() + tolerance) },
+          };
+    return this.prisma.appointment.findMany({
+      where,
+      include: {
+        client: { select: { firstName: true, lastName: true, phone: true, preferredLanguage: true } },
+        service: { select: { name: true } },
+      },
+    });
+  }
+
+  async markReminderSent(id: string, window: '24h' | '5h'): Promise<void> {
+    const data = window === '24h' ? { reminderSent24h: true } : { reminderSent5h: true };
+    await this.prisma.appointment.update({ where: { id }, data });
+  }
+
   findAll() {
     return this.prisma.appointment.findMany({
       orderBy: { startTime: 'asc' },

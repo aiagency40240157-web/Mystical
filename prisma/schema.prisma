@@ -81,7 +81,7 @@ model Appointment {
   endTime         DateTime
   status          String   @default("PENDING_PAYMENT")
   reminderSent5h  Boolean  @default(false)
-  reminderSent1h  Boolean  @default(false)
+  reminderSent24h Boolean  @default(false)
   createdAt       DateTime @default(now())
   payment         Payment?
 }
