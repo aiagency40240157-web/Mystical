@@ -13,6 +13,7 @@ const navItems = [
   { href: '/waitlist', label: 'Waitlist', roles: ['MANAGER', 'AGENT', 'ASSISTANT'] },
   { href: '/analytics', label: 'Analytics', roles: ['MANAGER', 'ASSISTANT'] },
   { href: '/audit', label: 'Audit Logs', roles: ['MANAGER', 'ASSISTANT'] },
+  { href: '/credits', label: 'Credits', roles: ['MANAGER', 'AGENT'] },
   { href: '/relationships', label: 'Relationships', roles: ['MANAGER'] },
 ];
 

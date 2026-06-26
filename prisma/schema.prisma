@@ -33,6 +33,8 @@ model Client {
   payments          Payment[]
   relationshipsAsA  Relationship[]  @relation("RelationshipA")
   relationshipsAsB  Relationship[]  @relation("RelationshipB")
+  income            Income[]        @relation("ClientIncome")
+  credits           ClientCredit[]  @relation("ClientCredit")
 }
 
 model Relationship {
@@ -94,6 +96,31 @@ model Payment {
   status                String      @default("PENDING")
   stripePaymentIntentId String?     @unique
   createdAt             DateTime    @default(now())
+}
+
+model Income {
+  id          String   @id @default(uuid())
+  amount      Float
+  type        String
+  description String?
+  clientId    String?
+  client      Client?  @relation("ClientIncome", fields: [clientId], references: [id])
+  recordedBy  String
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model ClientCredit {
+  id          String   @id @default(uuid())
+  clientId    String
+  client      Client   @relation("ClientCredit", fields: [clientId], references: [id])
+  amount      Float
+  paidAmount  Float    @default(0)
+  type        String
+  description String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AuditLog {

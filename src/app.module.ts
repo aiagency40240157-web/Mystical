@@ -17,6 +17,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { RelationshipsModule } from './modules/relationships/relationships.module';
 import { InstagramModule } from './modules/instagram/instagram.module';
 import { ServicesModule } from './modules/services/services.module';
+import { FinancialModule } from './modules/financial/financial.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { RolesGuard } from './common/guards/roles.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
@@ -44,6 +45,7 @@ import configuration from './config/configuration';
     RetentionModule,
     InstagramModule,
     ServicesModule,
+    FinancialModule,
   ],
   controllers: [AppController],
   providers: [

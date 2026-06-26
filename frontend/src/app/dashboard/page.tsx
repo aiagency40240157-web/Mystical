@@ -14,6 +14,7 @@ import {
 } from 'date-fns';
 import AppLayout from '@/components/AppLayout';
 import { api } from '@/lib/api';
+import { getRole } from '@/lib/auth';
 
 interface AnalyticsSummary {
   appointmentsToday: number;
@@ -34,6 +35,21 @@ interface Appointment {
   status: string;
 }
 
+interface FinancialSummary {
+  income: { today: number; week: number; month: number; year: number };
+  credits: { total: number; count: number; items: CreditItem[] };
+}
+
+interface CreditItem {
+  id: string;
+  client: { id: string; firstName: string; lastName: string };
+  amount: number;
+  paidAmount: number;
+  balance: number;
+  type: string;
+  description?: string;
+}
+
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const pillStyle: Record<string, string> = {
@@ -43,19 +59,20 @@ const pillStyle: Record<string, string> = {
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [financial, setFinancial] = useState<FinancialSummary | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [month, setMonth] = useState(() => new Date());
+  const [role, setRole] = useState('');
 
   useEffect(() => {
+    setRole(getRole() ?? '');
     const today = format(new Date(), 'yyyy-MM-dd');
     let pending = 2;
     const done = () => {
       if (--pending === 0) setLoading(false);
     };
-    // Loaded independently so a failure in one panel doesn't blank the other.
-    // A 401 (expired token) is handled by the api layer, which redirects to login.
     api
       .get<AnalyticsSummary>(`/analytics/summary?date=${today}`)
       .then(setSummary)
@@ -66,6 +83,11 @@ export default function DashboardPage() {
       .then(setAppointments)
       .catch(() => setError('Unable to process this request at this time.'))
       .finally(done);
+    // Financial summary only for manager
+    const r = getRole();
+    if (r === 'MANAGER') {
+      api.get<FinancialSummary>('/financial/summary').then(setFinancial).catch(() => {});
+    }
   }, []);
 
   // Active appointments grouped by local calendar day (yyyy-MM-dd).
@@ -129,6 +151,65 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+
+          {role === 'MANAGER' && financial && (
+            <>
+              <h2 className="text-lg font-semibold text-slate-900 mb-3">Revenue</h2>
+              <div className="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-4">
+                {[
+                  { label: 'Today', value: financial.income.today },
+                  { label: 'This Week', value: financial.income.week },
+                  { label: 'This Month', value: financial.income.month },
+                  { label: 'This Year', value: financial.income.year },
+                ].map((card) => (
+                  <div key={card.label} className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{card.label}</p>
+                    <p className="text-3xl font-bold text-emerald-600 mt-2">${card.value.toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-white border border-slate-200 rounded-lg shadow-sm mb-8">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                  <h2 className="text-base font-semibold text-slate-800">
+                    Outstanding Credits
+                    {financial.credits.count > 0 && (
+                      <span className="ml-2 text-sm font-normal text-red-600">
+                        ${financial.credits.total.toFixed(2)} owed by {financial.credits.count} entr{financial.credits.count === 1 ? 'y' : 'ies'}
+                      </span>
+                    )}
+                  </h2>
+                  <a href="/credits" className="text-sm text-indigo-600 hover:underline">Manage credits →</a>
+                </div>
+                {financial.credits.items.length === 0 ? (
+                  <p className="px-6 py-6 text-sm text-slate-400">No outstanding credits.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-left">
+                        <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase">Client</th>
+                        <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase">Type</th>
+                        <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase">Total</th>
+                        <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase">Paid</th>
+                        <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {financial.credits.items.slice(0, 8).map((c) => (
+                        <tr key={c.id}>
+                          <td className="px-6 py-3 font-medium text-slate-900">{c.client.firstName} {c.client.lastName}</td>
+                          <td className="px-6 py-3 text-slate-500 capitalize">{c.type}</td>
+                          <td className="px-6 py-3 text-slate-700">${c.amount.toFixed(2)}</td>
+                          <td className="px-6 py-3 text-green-600">${c.paidAmount.toFixed(2)}</td>
+                          <td className="px-6 py-3 font-semibold text-red-600">${c.balance.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
