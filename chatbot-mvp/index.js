@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const QRCode = require('qrcode');
-const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
 const https = require('https');
 const http = require('http');
@@ -16,6 +15,9 @@ const BACKEND_URL       = process.env.BACKEND_URL       || 'http://localhost:300
 const ALLOWED_NUMBERS   = process.env.ALLOWED_NUMBERS
   ? process.env.ALLOWED_NUMBERS.split(',').map(n => n.trim()).filter(Boolean)
   : [];
+
+// Directory where FileMemory stores per-session conversation history
+const SESSIONS_DIR = path.join(__dirname, 'data', 'sessions');
 
 const WELCOME_MESSAGE = `¡Hola! Bienvenido a *Munay Bliss LLC*. Soy tu asistente virtual y estoy aquí para ayudarte con información sobre nuestros servicios de Love Life Coaching y Holistic Services, así como para agendar tu cita.
 
@@ -72,10 +74,6 @@ if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY.startsWith('sk-ant-PEGA')) {
   process.exit(1);
 }
 
-// ── State ────────────────────────────────────────────────────────────────────
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-const histories = new Map(); // chatId → [{role, content}]
-
 // ── Backend API helper ────────────────────────────────────────────────────────
 function callBackend(method, endpoint, body) {
   return new Promise((resolve, reject) => {
@@ -103,36 +101,7 @@ function callBackend(method, endpoint, body) {
   });
 }
 
-// ── Tool definitions ──────────────────────────────────────────────────────────
-const TOOLS = [
-  {
-    name: 'book_appointment',
-    description: 'Registra una cita en el sistema. Úsalo cuando el cliente confirme explícitamente que quiere agendar una cita y haya proporcionado fecha y hora.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        firstName: { type: 'string', description: 'Nombre del cliente' },
-        lastName:  { type: 'string', description: 'Apellido del cliente. Si no lo proporcionó, usa "Cliente".' },
-        startTime: { type: 'string', description: `Fecha y hora en ISO 8601 con offset del Pacífico (California). Ej: para las 3:00 PM PT usa 2026-05-15T15:00:00${pacificOffset()}` },
-        serviceName: { type: 'string', description: 'Nombre EXACTO del servicio que eligió el cliente, tal como aparece en el catálogo (ej: "Chakra Alignment", "Life Coaching — 30 min"). Omítelo solo si el cliente no eligió servicio.' },
-      },
-      required: ['firstName', 'lastName', 'startTime'],
-    },
-  },
-  {
-    name: 'get_availability',
-    description: 'Consulta los horarios disponibles para una fecha específica.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        date: { type: 'string', description: 'Fecha en formato YYYY-MM-DD, ej: 2026-05-15' },
-      },
-      required: ['date'],
-    },
-  },
-];
-
-// ── Tool execution ────────────────────────────────────────────────────────────
+// ── Tool execution (business logic — phone is injected per session) ──────────
 async function executeTool(toolName, toolInput, phone) {
   if (toolName === 'get_availability') {
     // Resolve clientId by phone so the availability is filtered by privacy rules
@@ -197,31 +166,14 @@ async function executeTool(toolName, toolInput, phone) {
   return 'Herramienta desconocida.';
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function getHistory(chatId) {
-  if (!histories.has(chatId)) histories.set(chatId, []);
-  return histories.get(chatId);
-}
-
-function pushMessage(chatId, role, content) {
-  const hist = getHistory(chatId);
-  hist.push({ role, content });
-  if (hist.length > HISTORY_LENGTH * 2) hist.splice(0, 2);
-}
-
-function getNow() {
-  const now = new Date();
-  return now.toLocaleString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', timeZone:BUSINESS_TZ });
-}
-
-async function askClaude(chatId, phone, userText) {
-  pushMessage(chatId, 'user', userText);
-
-  const systemPrompt = `${BOT_PERSONALITY}
+// ── Build system prompt ───────────────────────────────────────────────────────
+function buildSystemPrompt() {
+  const offset = pacificOffset();
+  return `${BOT_PERSONALITY}
 
 Fecha y hora actual: ${getNow()} (hora del Pacífico, California — la oficina está en Orange County, CA).
 Horario de atención: lunes a viernes 9:00–19:00 hora del Pacífico (PT). Citas de 25–30 minutos.
-IMPORTANTE — ZONA HORARIA: todas las horas que menciones o agendes son hora del Pacífico (California). Cuando llames a book_appointment, el campo startTime DEBE ser ISO 8601 con el offset del Pacífico actual (${pacificOffset()}). Formato: YYYY-MM-DDThh:mm:ss${pacificOffset()} — usa la fecha EXACTA del día que el cliente eligió (no copies el ejemplo). Ej: si el cliente quiere hoy a las 3:30 PM, usa la fecha de hoy con T15:30:00${pacificOffset()}.
+IMPORTANTE — ZONA HORARIA: todas las horas que menciones o agendes son hora del Pacífico (California). Cuando llames a book_appointment, el campo startTime DEBE ser ISO 8601 con el offset del Pacífico actual (${offset}). Formato: YYYY-MM-DDThh:mm:ss${offset} — usa la fecha EXACTA del día que el cliente eligió (no copies el ejemplo). Ej: si el cliente quiere hoy a las 3:30 PM, usa la fecha de hoy con T15:30:00${offset}.
 
 ESTILO DE RESPUESTAS:
 - Respuestas BREVES y DIRECTAS. Máximo 3–4 líneas.
@@ -275,7 +227,7 @@ JAMÁS digas "cita confirmada", "agendada", "registrada", "reservada" o equivale
 
 El flujo CORRECTO de confirmación es:
 1. El cliente dice "sí" o confirma de algún modo.
-2. INMEDIATAMENTE llamas al tool book_appointment con firstName, lastName y startTime (ISO 8601 con offset del Pacífico, ej: ...T15:30:00${pacificOffset()} para las 3:30 PM de HOY).
+2. INMEDIATAMENTE llamas al tool book_appointment con firstName, lastName y startTime (ISO 8601 con offset del Pacífico, ej: ...T15:30:00${offset} para las 3:30 PM de HOY).
 3. Esperas el resultado del tool.
 4. Lee el resultado del tool y responde EXACTAMENTE según lo que diga:
    - Si contiene "Cita confirmada exitosamente": dile al cliente que su cita está CONFIRMADA (día, hora y servicio). NO menciones pagos.
@@ -285,48 +237,95 @@ El flujo CORRECTO de confirmación es:
 CRÍTICO: SIEMPRE llama a book_appointment cuando el cliente confirma — incluso si crees que el horario podría estar ocupado. Es el sistema quien decide, no tú. Nunca respondas "no disponible" sin haber llamado al tool primero.
 
 Si el cliente confirma y tú respondes "no disponible" SIN haber llamado a book_appointment, estás tomando una decisión que le corresponde al sistema. Esto es inaceptable.`;
-
-  let messages = getHistory(chatId);
-  let finalReply = '';
-
-  // Agentic loop: Claude puede llamar tools múltiples veces
-  while (true) {
-    const response = await anthropic.messages.create({
-      model: CLAUDE_MODEL,
-      max_tokens: 400,
-      system: systemPrompt,
-      tools: TOOLS,
-      messages,
-    });
-
-    if (response.stop_reason === 'tool_use') {
-      // Añadir respuesta del asistente (con tool_use blocks) al historial
-      messages = [...messages, { role: 'assistant', content: response.content }];
-
-      const toolResults = [];
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue;
-        console.log(`🔧  Tool: ${block.name}`, JSON.stringify(block.input));
-        const result = await executeTool(block.name, block.input, phone);
-        console.log(`🔧  Result: ${result}`);
-        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
-      }
-
-      // Añadir resultados de tools y continuar
-      messages = [...messages, { role: 'user', content: toolResults }];
-      continue;
-    }
-
-    // stop_reason === 'end_turn' — respuesta final
-    finalReply = response.content.find(b => b.type === 'text')?.text ?? '(sin respuesta)';
-    break;
-  }
-
-  // Guardar solo el mensaje del usuario y la respuesta final en el historial persistente
-  pushMessage(chatId, 'assistant', finalReply);
-  return finalReply;
 }
 
+function getNow() {
+  const now = new Date();
+  return now.toLocaleString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', timeZone:BUSINESS_TZ });
+}
+
+// ── Tool schema definitions ───────────────────────────────────────────────────
+function makeToolSchemas() {
+  const offset = pacificOffset();
+  return [
+    {
+      name: 'book_appointment',
+      description: 'Registra una cita en el sistema. Úsalo cuando el cliente confirme explícitamente que quiere agendar una cita y haya proporcionado fecha y hora.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          firstName:   { type: 'string', description: 'Nombre del cliente' },
+          lastName:    { type: 'string', description: 'Apellido del cliente. Si no lo proporcionó, usa "Cliente".' },
+          startTime:   { type: 'string', description: `Fecha y hora en ISO 8601 con offset del Pacífico (California). Ej: para las 3:00 PM PT usa 2026-05-15T15:00:00${offset}` },
+          serviceName: { type: 'string', description: 'Nombre EXACTO del servicio que eligió el cliente, tal como aparece en el catálogo (ej: "Chakra Alignment", "Life Coaching — 30 min"). Omítelo solo si el cliente no eligió servicio.' },
+        },
+        required: ['firstName', 'lastName', 'startTime'],
+      },
+    },
+    {
+      name: 'get_availability',
+      description: 'Consulta los horarios disponibles para una fecha específica.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          date: { type: 'string', description: 'Fecha en formato YYYY-MM-DD, ej: 2026-05-15' },
+        },
+        required: ['date'],
+      },
+    },
+  ];
+}
+
+// ── Session management ────────────────────────────────────────────────────────
+// Map<chatId, Agent> — one Agent per chat session, tools close over `phone`
+const sessionAgents = new Map();
+
+// agency-runtime imports (loaded once during init)
+let AgentClass, AnthropicProviderClass, ToolRegistryClass, FileMemoryClass;
+let fileMemory; // shared FileMemory instance (stores sessions by chatId)
+let anthropicProvider; // shared AnthropicProvider instance
+
+/**
+ * Returns or creates the Agent for a given chatId.
+ * Tools in the registry close over `phone` to pass it to executeTool().
+ */
+function getOrCreateAgent(chatId, phone) {
+  if (sessionAgents.has(chatId)) return sessionAgents.get(chatId);
+
+  const registry = new ToolRegistryClass();
+
+  // Register tools with phone captured in closure
+  for (const schema of makeToolSchemas()) {
+    const toolName = schema.name;
+    registry.register({
+      name: toolName,
+      description: schema.description,
+      inputSchema: schema.inputSchema,
+      async execute(input) {
+        console.log(`🔧  Tool: ${toolName}`, JSON.stringify(input));
+        const result = await executeTool(toolName, input, phone);
+        console.log(`🔧  Result: ${result}`);
+        return result;
+      },
+    });
+  }
+
+  const agent = new AgentClass(
+    anthropicProvider,
+    registry,
+    fileMemory,
+    {
+      system: buildSystemPrompt(),
+      maxTokens: 1024,
+      maxTurns: 20,
+    },
+  );
+
+  sessionAgents.set(chatId, agent);
+  return agent;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function isAllowed(from) {
   if (ALLOWED_NUMBERS.length === 0) return true;
   const number = from.replace('@c.us', '');
@@ -337,78 +336,111 @@ function phoneFromJid(jid) {
   return jid.replace('@c.us', '').replace('@lid', '');
 }
 
-// ── WhatsApp client ──────────────────────────────────────────────────────────
-const waClient = new Client({
-  authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
-  puppeteer: {
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  },
-});
+// ── Main async init ───────────────────────────────────────────────────────────
+async function main() {
+  // Dynamic import of ESM agency-runtime from CommonJS
+  const runtime = await import('agency-runtime');
+  AgentClass          = runtime.Agent;
+  AnthropicProviderClass = runtime.AnthropicProvider;
+  ToolRegistryClass   = runtime.ToolRegistry;
+  FileMemoryClass     = runtime.FileMemory;
 
-waClient.on('qr', qr => {
-  const fs = require('fs');
-  const qrImagePath = path.join(__dirname, 'qr.png');
-  fs.writeFileSync(path.join(__dirname, 'qr-data.txt'), qr, 'utf8');
-  QRCode.toFile(qrImagePath, qr, { width: 400, margin: 2 }, (err) => {
-    if (err) { console.error('❌  Error generando QR:', err.message); return; }
-    console.log(`📷  QR generado → ${qrImagePath}`);
-    console.log('📱  Escanea el QR con WhatsApp para iniciar sesión.');
+  // Shared provider (model + API key)
+  anthropicProvider = new AnthropicProviderClass({
+    apiKey: ANTHROPIC_API_KEY,
+    model: CLAUDE_MODEL,
   });
-});
 
-waClient.on('authenticated', () => {
-  console.log('✅  Autenticado — guardando sesión...');
-});
+  // Shared FileMemory — persists sessions to disk at SESSIONS_DIR/<chatId>.json
+  fileMemory = new FileMemoryClass(SESSIONS_DIR);
 
-waClient.on('ready', () => {
-  console.log(`\n✅  Bot listo. Modelo: ${CLAUDE_MODEL}`);
-  console.log(`📋  Personalidad: ${BOT_PERSONALITY.slice(0, 80)}...`);
-  if (ALLOWED_NUMBERS.length > 0) {
-    console.log(`🔒  Solo responde a: ${ALLOWED_NUMBERS.join(', ')}`);
-  } else {
-    console.log('🌐  Responde a TODOS los chats');
-  }
-  console.log('\nEsperando mensajes...\n');
-});
+  console.log(`✅  agency-runtime cargado. Sessions dir: ${SESSIONS_DIR}`);
 
-waClient.on('message', async msg => {
-  if (msg.fromMe) return;
-  if (msg.isStatus) return;
-  if (!msg.body || msg.body.trim() === '') return;
-  if (!isAllowed(msg.from)) return;
+  // ── WhatsApp client ────────────────────────────────────────────────────────
+  const waClient = new Client({
+    authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+    puppeteer: {
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    },
+  });
 
-  const chatId = msg.from;
-  const phone  = phoneFromJid(msg.from);
-  const text   = msg.body.trim();
+  waClient.on('qr', qr => {
+    const fs = require('fs');
+    const qrImagePath = path.join(__dirname, 'qr.png');
+    fs.writeFileSync(path.join(__dirname, 'qr-data.txt'), qr, 'utf8');
+    QRCode.toFile(qrImagePath, qr, { width: 400, margin: 2 }, (err) => {
+      if (err) { console.error('❌  Error generando QR:', err.message); return; }
+      console.log(`📷  QR generado → ${qrImagePath}`);
+      console.log('📱  Escanea el QR con WhatsApp para iniciar sesión.');
+    });
+  });
 
-  console.log(`📩  [${new Date().toLocaleTimeString()}] ${chatId}: ${text.slice(0, 60)}`);
+  waClient.on('authenticated', () => {
+    console.log('✅  Autenticado — guardando sesión...');
+  });
 
-  try {
-    const chat = await msg.getChat();
-    await chat.sendStateTyping();
-
-    let reply;
-    // Saludo inicial: respuesta fija y deterministic. Solo si es el primer mensaje de la conversación.
-    const history = getHistory(chatId);
-    if (history.length === 0 && GREETING_PATTERN.test(text)) {
-      reply = WELCOME_MESSAGE;
-      pushMessage(chatId, 'user', text);
-      pushMessage(chatId, 'assistant', reply);
+  waClient.on('ready', () => {
+    console.log(`\n✅  Bot listo. Modelo: ${CLAUDE_MODEL}`);
+    console.log(`📋  Personalidad: ${BOT_PERSONALITY.slice(0, 80)}...`);
+    if (ALLOWED_NUMBERS.length > 0) {
+      console.log(`🔒  Solo responde a: ${ALLOWED_NUMBERS.join(', ')}`);
     } else {
-      reply = await askClaude(chatId, phone, text);
+      console.log('🌐  Responde a TODOS los chats');
     }
+    console.log('\nEsperando mensajes...\n');
+  });
 
-    await msg.reply(reply);
-    console.log(`📤  Bot → ${reply.slice(0, 80)}`);
-  } catch (err) {
-    console.error('❌  Error:', err.message);
-    await msg.reply('Lo siento, tuve un problema al procesar tu mensaje. Por favor intenta de nuevo en un momento.');
-  }
+  waClient.on('message', async msg => {
+    if (msg.fromMe) return;
+    if (msg.isStatus) return;
+    if (!msg.body || msg.body.trim() === '') return;
+    if (!isAllowed(msg.from)) return;
+
+    const chatId = msg.from;
+    const phone  = phoneFromJid(msg.from);
+    const text   = msg.body.trim();
+
+    console.log(`📩  [${new Date().toLocaleTimeString()}] ${chatId}: ${text.slice(0, 60)}`);
+
+    try {
+      const chat = await msg.getChat();
+      await chat.sendStateTyping();
+
+      // Check if this is a fresh session (no disk history yet) + greeting pattern
+      const existingHistory = await fileMemory.load(chatId);
+      let reply;
+
+      if (existingHistory.length === 0 && GREETING_PATTERN.test(text)) {
+        // Deterministic welcome — persist it so agent continues from there
+        reply = WELCOME_MESSAGE;
+        await fileMemory.save(chatId, [
+          { role: 'user',      content: text },
+          { role: 'assistant', content: WELCOME_MESSAGE },
+        ]);
+      } else {
+        // Delegate to Agent.run() — it loads history, runs the agentic loop, saves back
+        const agent = getOrCreateAgent(chatId, phone);
+        reply = await agent.run(text, chatId);
+      }
+
+      await msg.reply(reply);
+      console.log(`📤  Bot → ${reply.slice(0, 80)}`);
+    } catch (err) {
+      console.error('❌  Error:', err.message);
+      await msg.reply('Lo siento, tuve un problema al procesar tu mensaje. Por favor intenta de nuevo en un momento.');
+    }
+  });
+
+  waClient.on('disconnected', reason => {
+    console.log('⚠️  Desconectado:', reason);
+  });
+
+  waClient.initialize();
+}
+
+main().catch(err => {
+  console.error('Fatal error during initialization:', err);
+  process.exit(1);
 });
-
-waClient.on('disconnected', reason => {
-  console.log('⚠️  Desconectado:', reason);
-});
-
-waClient.initialize();
