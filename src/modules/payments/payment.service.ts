@@ -5,7 +5,7 @@ import { AuditService } from '../audit/audit.service';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { retryWithBackoff } from '../../common/utils/retry.util';
 
-const DEPOSIT_AMOUNT_CENTS = 2091;
+const DEPOSIT_AMOUNT_CENTS = 2000;
 const CANCELLATION_WINDOW_HOURS = parseInt(process.env.CANCELLATION_WINDOW_HOURS ?? '24', 10);
 
 type StripeInstance = InstanceType<typeof Stripe>;
@@ -109,7 +109,9 @@ export class PaymentService {
         },
         update: { status: 'PENDING', stripePaymentIntentId: `mock_${appointmentId}` },
       });
-      const base = process.env.STRIPE_SUCCESS_URL?.replace('/success', '') ?? 'http://localhost:3000/api/payments';
+      const base =
+        process.env.STRIPE_SUCCESS_URL?.replace('/success', '') ??
+        'https://mystical-backend-eaf6.onrender.com/api/payments';
       return { checkoutUrl: `${base}/mock-pay/${appointmentId}` };
     }
 
@@ -125,7 +127,9 @@ export class PaymentService {
       });
     }
 
-    const baseSuccessUrl = process.env.STRIPE_SUCCESS_URL ?? 'https://munaybliss.com/payment/success';
+    const baseSuccessUrl =
+      process.env.STRIPE_SUCCESS_URL ??
+      'https://mystical-backend-eaf6.onrender.com/api/payments/success';
     const successUrl = `${baseSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`;
 
     const session = await retryWithBackoff(() =>
@@ -141,7 +145,9 @@ export class PaymentService {
         }],
         mode: 'payment',
         success_url: successUrl,
-        cancel_url: process.env.STRIPE_CANCEL_URL ?? 'https://munaybliss.com/payment/cancel',
+        cancel_url:
+          process.env.STRIPE_CANCEL_URL ??
+          'https://mystical-backend-eaf6.onrender.com/api/payments/cancel',
         metadata: { appointmentId, clientId: appointment.clientId },
       }),
     );

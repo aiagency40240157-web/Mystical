@@ -7,7 +7,7 @@ import { PaymentService } from '../../src/modules/payments/payment.service';
 import { AuditService } from '../../src/modules/audit/audit.service';
 import { WaitlistService } from '../../src/modules/waitlist/waitlist.service';
 
-const DEPOSIT = 2091;
+const DEPOSIT = 2000;
 
 function makeStripe(overrides: Record<string, unknown> = {}) {
   return {

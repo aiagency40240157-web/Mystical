@@ -182,7 +182,7 @@ async function executeTool(toolName, toolInput, phone) {
       try {
         const paymentResult = await callBackend('POST', '/payments/checkout-session', { appointmentId: result.appointmentId });
         if (paymentResult.checkoutUrl) {
-          return `Cita registrada para ${toolInput.firstName} ${toolInput.lastName}${serviceStr} el ${dateStr} a las ${timeStr} (hora del Pacífico). La cita NO está confirmada todavía: para confirmarla, el cliente debe pagar el depósito de $20.91 USD ÚNICAMENTE en este enlace:\n${paymentResult.checkoutUrl}\n\nEn cuanto se realice el pago, la cita quedará confirmada automáticamente. No existe ningún otro método de pago.`;
+          return `Cita registrada para ${toolInput.firstName} ${toolInput.lastName}${serviceStr} el ${dateStr} a las ${timeStr} (hora del Pacífico). La cita NO está confirmada todavía: para confirmarla, el cliente debe pagar el depósito de $20.00 USD (no reembolsable en caso de no-show) ÚNICAMENTE en este enlace:\n${paymentResult.checkoutUrl}\n\nEn cuanto se realice el pago, la cita quedará confirmada automáticamente. No existe ningún otro método de pago.`;
         }
       } catch (e) {
         console.error('Error creating checkout session:', e.message);
@@ -256,7 +256,7 @@ REGLAS IMPORTANTES:
 
 💳 REGLA CRÍTICA — PAGOS:
 - Estas reglas de pago aplican SOLO cuando el sistema pide un depósito (resultado con "Cita registrada" y un enlace de pago). Si el resultado del sistema dice "Cita confirmada exitosamente", la cita está CONFIRMADA sin depósito: dilo así y NO menciones pagos, depósitos ni enlaces.
-- El depósito de $20.91 USD se paga ÚNICAMENTE a través del enlace de pago en línea que genera el sistema (book_appointment). NO existe ningún otro método de pago.
+- El depósito de $20.00 USD (no reembolsable en caso de no-show o cancelación tardía) se paga ÚNICAMENTE a través del enlace de pago en línea que genera el sistema (book_appointment). NO existe ningún otro método de pago.
 - JAMÁS inventes o sugieras otras formas de pago: NO digas "paga en la oficina", "en efectivo", "transferencia", "al llegar", ni nada parecido. Si lo haces, estás engañando al cliente.
 - Si el cliente pregunta cómo pagar y ya tienes el enlace, dale el enlace. Si por algún motivo no hay enlace disponible, dile que hubo un problema técnico y que en breve se le enviará el enlace; NUNCA ofrezcas un método alternativo.
 - Una cita con pago pendiente NO está confirmada. No digas "confirmada" hasta que el sistema reporte el pago realizado.
@@ -370,8 +370,9 @@ let waClient = null;
 let waClientReady = false;
 
 // ── Session management ────────────────────────────────────────────────────────
-// Map<chatId, Agent> — one Agent per chat session, tools close over `phone`
-const sessionAgents = new Map();
+// No per-session cache — agent is recreated on each message so the system prompt
+// always has the current date/time. Conversation history lives in FileMemory (disk).
+
 
 // agency-runtime imports (loaded once during init)
 let AgentClass, AnthropicProviderClass, ToolRegistryClass, FileMemoryClass;
@@ -383,7 +384,6 @@ let anthropicProvider; // shared AnthropicProvider instance
  * Tools in the registry close over `phone` to pass it to executeTool().
  */
 function getOrCreateAgent(chatId, phone) {
-  if (sessionAgents.has(chatId)) return sessionAgents.get(chatId);
 
   const registry = new ToolRegistryClass();
 
@@ -414,7 +414,6 @@ function getOrCreateAgent(chatId, phone) {
     },
   );
 
-  sessionAgents.set(chatId, agent);
   return agent;
 }
 
