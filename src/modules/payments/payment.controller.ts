@@ -31,7 +31,7 @@ export class PaymentController {
   }
 
   @Get('mock-pay/:appointmentId')
-  @Public()
+  @Roles('MANAGER')
   async mockPay(@Param('appointmentId') appointmentId: string, @Res() res: Response) {
     if (process.env.MOCK_PAYMENTS !== 'true') {
       res.status(404).send('Not found');
@@ -49,10 +49,9 @@ h1{color:#16a34a;font-size:2rem;margin-bottom:.5rem}p{color:#374151}.badge{displ
 
   @Get('success')
   @Public()
-  async paymentSuccess(@Query('session_id') sessionId: string, @Res() res: Response) {
-    if (sessionId) {
-      await this.paymentService.confirmFromSession(sessionId);
-    }
+  async paymentSuccess(@Res() res: Response) {
+    // Appointment confirmation is handled exclusively by the Stripe webhook (POST /webhook).
+    // This endpoint only renders the thank-you page so we avoid replay attacks via captured session_id URLs.
     res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pago exitoso</title>
 <style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0fdf4}
 .card{text-align:center;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1)}

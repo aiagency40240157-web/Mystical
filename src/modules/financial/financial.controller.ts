@@ -18,10 +18,10 @@ export class FinancialController {
     const auth = headers?.authorization;
     if (auth?.startsWith('Bearer ')) {
       try {
-        const payload = this.jwtService.decode(auth.slice(7)) as { email?: string } | null;
+        const payload = this.jwtService.verify<{ email?: string }>(auth.slice(7));
         return payload?.email ?? 'agent';
       } catch {
-        /* */
+        /* invalid token — fall through to default */
       }
     }
     return 'agent';

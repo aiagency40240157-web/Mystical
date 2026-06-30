@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { Roles, Public } from '../../common/decorators/roles.decorator';
 import { AppointmentsService } from './appointments.service';
+import { BookViaBotDto } from './dto/book-via-bot.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 
@@ -16,16 +17,13 @@ export class AppointmentsController {
 
   @Post('book-via-bot')
   @Roles('SYSTEM')
-  bookViaBot(
-    @Body()
-    body: { phone: string; firstName: string; lastName: string; startTime: string; serviceName?: string },
-  ) {
+  bookViaBot(@Body() dto: BookViaBotDto) {
     return this.appointmentsService.bookViaBot(
-      body.phone,
-      body.firstName,
-      body.lastName,
-      body.startTime,
-      body.serviceName,
+      dto.phone,
+      dto.firstName,
+      dto.lastName,
+      dto.startTime,
+      dto.serviceName,
     );
   }
 

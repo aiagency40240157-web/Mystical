@@ -56,10 +56,10 @@ describe('RolesGuard — public endpoints', () => {
 });
 
 describe('RolesGuard — unprotected endpoints (no @Roles)', () => {
-  it('allows any request when no roles are required', () => {
+  it('denies any request when no roles are required (deny-by-default)', () => {
     const guard = makeGuard({}, undefined);
     const ctx = makeContext(undefined);
-    expect(guard.canActivate(ctx)).toBe(true);
+    expect(guard.canActivate(ctx)).toBe(false);
   });
 });
 

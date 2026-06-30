@@ -34,7 +34,8 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!requiredRoles || requiredRoles.length === 0) return true;
+    // Deny by default: routes without @Roles() or @Public() are not accessible.
+    if (!requiredRoles || requiredRoles.length === 0) return false;
 
     const request = context.switchToHttp().getRequest<Record<string, unknown>>();
     const headers = request['headers'] as Record<string, string>;
