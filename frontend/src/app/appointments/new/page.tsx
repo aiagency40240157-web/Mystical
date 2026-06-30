@@ -51,18 +51,16 @@ function NewAppointmentForm() {
   }, []);
 
   useEffect(() => {
-    if (!date) {
-      setSlots([]);
-      setSelectedSlot('');
-      return;
-    }
-    setSlotsLoading(true);
+    setSlots([]);
     setSelectedSlot('');
-    api.get<string[]>(`/appointments/availability?date=${date}`)
+    if (!date) return;
+    setSlotsLoading(true);
+    const qs = clientId ? `date=${date}&clientId=${clientId}` : `date=${date}`;
+    api.get<string[]>(`/appointments/availability?${qs}`)
       .then(setSlots)
       .catch(() => setError('Unable to process this request at this time.'))
       .finally(() => setSlotsLoading(false));
-  }, [date]);
+  }, [date, clientId]);
 
   // Books/reschedules a specific slot. Used by the main button (selectedSlot)
   // and by the suggested-alternative buttons (which pass their own slot so a
@@ -248,7 +246,10 @@ function NewAppointmentForm() {
                 {slotsLoading ? (
                   <p className="text-slate-500 text-sm">Loading slots...</p>
                 ) : slots.length === 0 ? (
-                  <p className="text-slate-500 text-sm">No available slots for this date.</p>
+                  <p className="text-slate-500 text-sm">
+                    No available slots for this date.
+                    {clientId && ' This date may be unavailable due to a privacy conflict (color group policy) or fully booked.'}
+                  </p>
                 ) : (
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {slots.map((slot) => (
