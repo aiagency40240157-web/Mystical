@@ -15,6 +15,7 @@ const BACKEND_URL       = process.env.BACKEND_URL       || 'http://localhost:300
 const ALLOWED_NUMBERS   = process.env.ALLOWED_NUMBERS
   ? process.env.ALLOWED_NUMBERS.split(',').map(n => n.trim()).filter(Boolean)
   : [];
+const BOT_API_KEY       = process.env.BOT_API_KEY || '';
 
 // Directory where FileMemory stores per-session conversation history
 const SESSIONS_DIR = path.join(__dirname, 'data', 'sessions');
@@ -85,7 +86,7 @@ function callBackend(method, endpoint, body) {
       port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname + url.search,
       method,
-      headers: { 'Content-Type': 'application/json', ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}) },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': BOT_API_KEY, ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}) },
     };
     const req = lib.request(options, res => {
       let d = '';

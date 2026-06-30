@@ -16,6 +16,7 @@ export class PaymentController {
   }
 
   @Post('checkout-session')
+  @Roles('MANAGER', 'AGENT', 'SYSTEM')
   createCheckoutSession(@Body() dto: CreatePaymentIntentDto) {
     return this.paymentService.createCheckoutSession(dto.appointmentId);
   }
