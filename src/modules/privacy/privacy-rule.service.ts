@@ -54,9 +54,10 @@ export class PrivacyRuleService {
     });
     if (!client) return false;
 
-    if (client.groupColor === 'RED' || client.groupColor === 'YELLOW') {
+    const normalizedColor = client.groupColor?.toUpperCase() ?? null;
+    if (normalizedColor === 'RED' || normalizedColor === 'YELLOW') {
       const colorConflict = await this.hasGroupColorConflict(
-        client.groupColor,
+        normalizedColor,
         params.startTime,
       );
       if (colorConflict) return false;
@@ -111,7 +112,7 @@ export class PrivacyRuleService {
     const conflict = await this.prisma.appointment.findFirst({
       where: {
         status: { not: 'CANCELLED' },
-        client: { groupColor: oppositeColor },
+        client: { groupColor: { equals: oppositeColor, mode: 'insensitive' } },
         startTime: { gte: dayStart, lte: dayEnd },
       },
     });

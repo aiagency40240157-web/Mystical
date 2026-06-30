@@ -12,70 +12,70 @@ const CLIENTS = [
     key: 'isabella',
     firstName: 'Isabella', lastName: 'Torres',
     phone: '3001100001', email: 'isabella.torres@gmail.com',
-    groupColor: 'yellow', isKnownRelation: true, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: true, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'alejandro',
     firstName: 'Alejandro', lastName: 'Torres',
     phone: '3001100002', email: 'alejandro.torres@gmail.com',
-    groupColor: 'yellow', isKnownRelation: true, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: true, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'maria',
     firstName: 'María', lastName: 'Rodríguez',
     phone: '3002200001', email: 'maria.rodriguez@hotmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'sofia',
     firstName: 'Sofía', lastName: 'García',
     phone: '3003300001', email: 'sofia.garcia@gmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'carmen',
     firstName: 'Carmen', lastName: 'Vega',
     phone: '3004400001', email: 'carmen.vega@yahoo.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'jennifer',
     firstName: 'Jennifer', lastName: 'Williams',
     phone: '3005500001', email: 'jennifer.williams@gmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'en', noShowCount: 0,
   },
   {
     key: 'robert',
     firstName: 'Robert', lastName: 'Chen',
     phone: '3006600001', email: 'robert.chen@outlook.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'en', noShowCount: 0,
   },
   {
     key: 'patricia_m',
     firstName: 'Patricia', lastName: 'Morales',
     phone: '3007700001', email: 'patricia.morales@gmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'elena',
     firstName: 'Elena', lastName: 'Castillo',
     phone: '3008800001', email: 'elena.castillo@gmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'diana_p',
     firstName: 'Diana', lastName: 'Prince',
     phone: '3009900001', email: 'diana.prince@gmail.com',
-    groupColor: 'yellow', isKnownRelation: false, isVip: true,
+    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,
     preferredLanguage: 'en', noShowCount: 0,
   },
 
@@ -84,14 +84,14 @@ const CLIENTS = [
     key: 'carlos',
     firstName: 'Carlos', lastName: 'Rodríguez',
     phone: '3002200002', email: 'carlos.rodriguez@hotmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 1,
   },
   {
     key: 'ana',
     firstName: 'Ana', lastName: 'Rodríguez',
     phone: '3002200003', email: 'ana.rodriguez@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
@@ -100,14 +100,14 @@ const CLIENTS = [
     key: 'miguel',
     firstName: 'Miguel', lastName: 'García',
     phone: '3003300002', email: 'miguel.garcia@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'valentina',
     firstName: 'Valentina', lastName: 'García',
     phone: '3003300003', email: 'valentina.garcia@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
@@ -116,14 +116,14 @@ const CLIENTS = [
     key: 'marco',
     firstName: 'Marco', lastName: 'Ruiz',
     phone: '3011100001', email: 'marco.ruiz@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'catalina',
     firstName: 'Catalina', lastName: 'Ruiz',
     phone: '3011100002', email: 'catalina.ruiz@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
@@ -132,21 +132,21 @@ const CLIENTS = [
     key: 'laura',
     firstName: 'Laura', lastName: 'Martínez',
     phone: '3012200001', email: 'laura.martinez@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'patricia_l',
     firstName: 'Patricia', lastName: 'López',
     phone: '3012200002', email: 'patricia.lopez@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 1,
   },
   {
     key: 'diana_h',
     firstName: 'Diana', lastName: 'Hernández',
     phone: '3012200003', email: 'diana.hernandez@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
@@ -155,21 +155,21 @@ const CLIENTS = [
     key: 'rosa',
     firstName: 'Rosa', lastName: 'Vargas',
     phone: '3013300001', email: 'rosa.vargas@yahoo.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'lucia',
     firstName: 'Lucía', lastName: 'Vargas',
     phone: '3013300002', email: 'lucia.vargas@yahoo.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 2,
   },
   {
     key: 'ernesto',
     firstName: 'Ernesto', lastName: 'Vargas',
     phone: '3013300003', email: 'ernesto.vargas@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
@@ -178,21 +178,21 @@ const CLIENTS = [
     key: 'gabriela',
     firstName: 'Gabriela', lastName: 'Reyes',
     phone: '3014400001', email: 'gabriela.reyes@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'andrea',
     firstName: 'Andrea', lastName: 'Jiménez',
     phone: '3014400002', email: 'andrea.jimenez@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'daniela',
     firstName: 'Daniela', lastName: 'Fuentes',
     phone: '3014400003', email: 'daniela.fuentes@gmail.com',
-    groupColor: 'blue', isKnownRelation: true, isVip: false,
+    groupColor: 'BLUE', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 1,
   },
 
@@ -201,43 +201,64 @@ const CLIENTS = [
     key: 'sebastian',
     firstName: 'Sebastián', lastName: 'Mora',
     phone: '3015500001', email: 'sebastian.mora@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
   {
     key: 'nicolas',
     firstName: 'Nicolás', lastName: 'Mora',
     phone: '3015500002', email: 'nicolas.mora@gmail.com',
-    groupColor: 'red', isKnownRelation: true, isVip: false,
+    groupColor: 'RED', isKnownRelation: true, isVip: false,
     preferredLanguage: 'es', noShowCount: 0,
   },
 
   // ── Clientes regulares → alternando rojo / azul ───────────────────────────────
-  { key: 'camila',    firstName: 'Camila',    lastName: 'Peña',       phone: '3020000001', email: 'camila.pena@gmail.com',       groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'juan',      firstName: 'Juan',      lastName: 'Herrera',    phone: '3020000002', email: 'juan.herrera@gmail.com',      groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
-  { key: 'mariana',   firstName: 'Mariana',   lastName: 'Salazar',    phone: '3020000003', email: 'mariana.salazar@gmail.com',   groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'andres',    firstName: 'Andrés',    lastName: 'Gutiérrez',  phone: '3020000004', email: 'andres.gutierrez@gmail.com',  groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'juliana',   firstName: 'Juliana',   lastName: 'Ríos',       phone: '3020000005', email: 'juliana.rios@gmail.com',      groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 3 },
-  { key: 'felipe',    firstName: 'Felipe',    lastName: 'Ospina',     phone: '3020000006', email: 'felipe.ospina@gmail.com',     groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'natalia',   firstName: 'Natalia',   lastName: 'Bermúdez',   phone: '3020000007', email: 'natalia.bermudez@gmail.com',  groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'jorge',     firstName: 'Jorge',     lastName: 'Pizarro',    phone: '3020000008', email: 'jorge.pizarro@gmail.com',     groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 2 },
-  { key: 'sara',      firstName: 'Sara',      lastName: 'Montoya',    phone: '3020000009', email: 'sara.montoya@gmail.com',      groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'david',     firstName: 'David',     lastName: 'Aguilar',    phone: '3020000010', email: 'david.aguilar@gmail.com',     groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'ashley',    firstName: 'Ashley',    lastName: 'Johnson',    phone: '3020000011', email: 'ashley.johnson@gmail.com',    groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
-  { key: 'michael',   firstName: 'Michael',   lastName: 'Thompson',   phone: '3020000012', email: 'michael.thompson@gmail.com',  groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 1 },
-  { key: 'jessica',   firstName: 'Jessica',   lastName: 'Davis',      phone: '3020000013', email: 'jessica.davis@gmail.com',     groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
-  { key: 'lina',      firstName: 'Lina',      lastName: 'Cardona',    phone: '3020000014', email: 'lina.cardona@gmail.com',      groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'steven',    firstName: 'Steven',    lastName: 'Park',       phone: '3020000015', email: 'steven.park@gmail.com',       groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
-  { key: 'valeria',   firstName: 'Valeria',   lastName: 'Sánchez',    phone: '3020000016', email: 'valeria.sanchez@gmail.com',   groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'esteban',   firstName: 'Esteban',   lastName: 'Lozano',     phone: '3020000017', email: 'esteban.lozano@gmail.com',    groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
-  { key: 'paula',     firstName: 'Paula',     lastName: 'Mejía',      phone: '3020000018', email: 'paula.mejia@gmail.com',       groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'samuel',    firstName: 'Samuel',    lastName: 'Cano',       phone: '3020000019', email: 'samuel.cano@gmail.com',       groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'manuela',   firstName: 'Manuela',   lastName: 'Arango',     phone: '3020000020', email: 'manuela.arango@gmail.com',    groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'thomas',    firstName: 'Thomas',    lastName: 'Miller',     phone: '3020000021', email: 'thomas.miller@gmail.com',     groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 2 },
-  { key: 'isabela_f', firstName: 'Isabela',   lastName: 'Franco',     phone: '3020000022', email: 'isabela.franco@gmail.com',    groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'kevin',     firstName: 'Kevin',     lastName: 'Smith',      phone: '3020000023', email: 'kevin.smith@gmail.com',       groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
-  { key: 'alejandra', firstName: 'Alejandra', lastName: 'Quintero',   phone: '3020000024', email: 'alejandra.quintero@gmail.com',groupColor: 'blue', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
-  { key: 'ricardo',   firstName: 'Ricardo',   lastName: 'Pineda',     phone: '3020000025', email: 'ricardo.pineda@gmail.com',    groupColor: 'red',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
+  { key: 'camila',    firstName: 'Camila',    lastName: 'Peña',       phone: '3020000001', email: 'camila.pena@gmail.com',       groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'juan',      firstName: 'Juan',      lastName: 'Herrera',    phone: '3020000002', email: 'juan.herrera@gmail.com',      groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
+  { key: 'mariana',   firstName: 'Mariana',   lastName: 'Salazar',    phone: '3020000003', email: 'mariana.salazar@gmail.com',   groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'andres',    firstName: 'Andrés',    lastName: 'Gutiérrez',  phone: '3020000004', email: 'andres.gutierrez@gmail.com',  groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'juliana',   firstName: 'Juliana',   lastName: 'Ríos',       phone: '3020000005', email: 'juliana.rios@gmail.com',      groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 3 },
+  { key: 'felipe',    firstName: 'Felipe',    lastName: 'Ospina',     phone: '3020000006', email: 'felipe.ospina@gmail.com',     groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'natalia',   firstName: 'Natalia',   lastName: 'Bermúdez',   phone: '3020000007', email: 'natalia.bermudez@gmail.com',  groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'jorge',     firstName: 'Jorge',     lastName: 'Pizarro',    phone: '3020000008', email: 'jorge.pizarro@gmail.com',     groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 2 },
+  { key: 'sara',      firstName: 'Sara',      lastName: 'Montoya',    phone: '3020000009', email: 'sara.montoya@gmail.com',      groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'david',     firstName: 'David',     lastName: 'Aguilar',    phone: '3020000010', email: 'david.aguilar@gmail.com',     groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'ashley',    firstName: 'Ashley',    lastName: 'Johnson',    phone: '3020000011', email: 'ashley.johnson@gmail.com',    groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+  { key: 'michael',   firstName: 'Michael',   lastName: 'Thompson',   phone: '3020000012', email: 'michael.thompson@gmail.com',  groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 1 },
+  { key: 'jessica',   firstName: 'Jessica',   lastName: 'Davis',      phone: '3020000013', email: 'jessica.davis@gmail.com',     groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+  { key: 'lina',      firstName: 'Lina',      lastName: 'Cardona',    phone: '3020000014', email: 'lina.cardona@gmail.com',      groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'steven',    firstName: 'Steven',    lastName: 'Park',       phone: '3020000015', email: 'steven.park@gmail.com',       groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+  { key: 'valeria',   firstName: 'Valeria',   lastName: 'Sánchez',    phone: '3020000016', email: 'valeria.sanchez@gmail.com',   groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'esteban',   firstName: 'Esteban',   lastName: 'Lozano',     phone: '3020000017', email: 'esteban.lozano@gmail.com',    groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
+  { key: 'paula',     firstName: 'Paula',     lastName: 'Mejía',      phone: '3020000018', email: 'paula.mejia@gmail.com',       groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'samuel',    firstName: 'Samuel',    lastName: 'Cano',       phone: '3020000019', email: 'samuel.cano@gmail.com',       groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'manuela',   firstName: 'Manuela',   lastName: 'Arango',     phone: '3020000020', email: 'manuela.arango@gmail.com',    groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'thomas',    firstName: 'Thomas',    lastName: 'Miller',     phone: '3020000021', email: 'thomas.miller@gmail.com',     groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 2 },
+  { key: 'isabela_f', firstName: 'Isabela',   lastName: 'Franco',     phone: '3020000022', email: 'isabela.franco@gmail.com',    groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'kevin',     firstName: 'Kevin',     lastName: 'Smith',      phone: '3020000023', email: 'kevin.smith@gmail.com',       groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+  { key: 'alejandra', firstName: 'Alejandra', lastName: 'Quintero',   phone: '3020000024', email: 'alejandra.quintero@gmail.com',groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'ricardo',   firstName: 'Ricardo',   lastName: 'Pineda',     phone: '3020000025', email: 'ricardo.pineda@gmail.com',    groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 1 },
+
+  // ── 5 nuevas clientas VIP → yellow ───────────────────────────────────────────
+  { key: 'valentina_l', firstName: 'Valentina', lastName: 'López',    phone: '3010000001', email: 'valentina.lopez@gmail.com',    groupColor: 'YELLOW', isKnownRelation: false, isVip: true,  preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'adriana',     firstName: 'Adriana',   lastName: 'Reyes',    phone: '3010000002', email: 'adriana.reyes@gmail.com',      groupColor: 'YELLOW', isKnownRelation: false, isVip: true,  preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'claudia',     firstName: 'Claudia',   lastName: 'Navarro',  phone: '3010000003', email: 'claudia.navarro@outlook.com',  groupColor: 'YELLOW', isKnownRelation: false, isVip: true,  preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'ximena',      firstName: 'Ximena',    lastName: 'Aguilar',  phone: '3010000004', email: 'ximena.aguilar@gmail.com',     groupColor: 'YELLOW', isKnownRelation: false, isVip: true,  preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'sarah_m',     firstName: 'Sarah',     lastName: 'Mitchell', phone: '3010000005', email: 'sarah.mitchell@gmail.com',     groupColor: 'YELLOW', isKnownRelation: false, isVip: true,  preferredLanguage: 'en', noShowCount: 0 },
+
+  // ── 5 nuevas clientas → red ───────────────────────────────────────────────────
+  { key: 'fernanda',  firstName: 'Fernanda',  lastName: 'Cruz',      phone: '3020000026', email: 'fernanda.cruz@gmail.com',      groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'paola',     firstName: 'Paola',     lastName: 'Medina',    phone: '3020000027', email: 'paola.medina@gmail.com',       groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'veronica',  firstName: 'Verónica',  lastName: 'Soto',      phone: '3020000028', email: 'veronica.soto@yahoo.com',      groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'cristina',  firstName: 'Cristina',  lastName: 'Ramos',     phone: '3020000029', email: 'cristina.ramos@gmail.com',     groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'amanda',    firstName: 'Amanda',    lastName: 'Wilson',    phone: '3020000030', email: 'amanda.wilson@gmail.com',      groupColor: 'RED',  isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+
+  // ── 5 nuevas clientas → blue ──────────────────────────────────────────────────
+  { key: 'marcela',   firstName: 'Marcela',   lastName: 'Vargas',    phone: '3020000031', email: 'marcela.vargas@gmail.com',     groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'renata',    firstName: 'Renata',    lastName: 'Moreno',    phone: '3020000032', email: 'renata.moreno@gmail.com',      groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'yolanda',   firstName: 'Yolanda',   lastName: 'Figueroa',  phone: '3020000033', email: 'yolanda.figueroa@gmail.com',   groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
+  { key: 'stephanie', firstName: 'Stephanie', lastName: 'Lee',       phone: '3020000034', email: 'stephanie.lee@gmail.com',      groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'en', noShowCount: 0 },
+  { key: 'monica',    firstName: 'Mónica',    lastName: 'Sandoval',  phone: '3020000035', email: 'monica.sandoval@gmail.com',    groupColor: 'BLUE', isKnownRelation: false, isVip: false, preferredLanguage: 'es', noShowCount: 0 },
 ] as const;
 
 // Relationships — VIP clients only relate to other VIPs or to their non-VIP known contacts.
@@ -290,7 +311,7 @@ async function main() {
       : await prisma.client.create({ data });
     ids[key] = record.id;
 
-    const icon = data.isVip ? '🟡' : data.groupColor === 'red' ? '🔴' : '🔵';
+    const icon = data.isVip ? '🟡' : data.groupColor === 'RED' ? '🔴' : '🔵';
     const rel  = data.isKnownRelation ? ' 🔗' : '';
     console.log(`  ${icon}${rel}  ${data.firstName} ${data.lastName}`);
   }
@@ -316,8 +337,8 @@ async function main() {
   }
 
   const vip = CLIENTS.filter(c => c.isVip).length;
-  const red = CLIENTS.filter(c => !c.isVip && c.groupColor === 'red').length;
-  const blue = CLIENTS.filter(c => !c.isVip && c.groupColor === 'blue').length;
+  const red = CLIENTS.filter(c => !c.isVip && c.groupColor === 'RED').length;
+  const blue = CLIENTS.filter(c => !c.isVip && c.groupColor === 'BLUE').length;
   const confirmed = RELATIONSHIPS.filter(r => r[3]).length;
 
   console.log(`
