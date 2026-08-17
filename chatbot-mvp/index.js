@@ -22,7 +22,7 @@ const SESSIONS_DIR = path.join(__dirname, 'data', 'sessions');
 
 const WELCOME_MESSAGE = `¡Hola! Bienvenido a *Munay Bliss LLC*. Soy tu asistente virtual y estoy aquí para ayudarte con información sobre nuestros servicios de Love Life Coaching y Holistic Services, así como para agendar tu cita.
 
-¿En qué puedo asistirte hoy?`;
+¿En qué puedo ayudarte el día de hoy?`;
 
 const GREETING_PATTERN = /^(hola|holi|holis|buenas|buen[oa]s? d[ií]as|buen[oa]s? tardes|buen[oa]s? noches|hi|hey|hello|saludos|qu[eé] tal|qué onda)[\s!.?¡¿]*$/i;
 
@@ -499,7 +499,7 @@ async function main() {
     authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
     puppeteer: {
       headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -569,8 +569,8 @@ async function main() {
       const existingHistory = await fileMemory.load(chatId);
       let reply;
 
-      if (existingHistory.length === 0 && GREETING_PATTERN.test(text)) {
-        // Deterministic welcome — persist it so agent continues from there
+      if (existingHistory.length === 0) {
+        // Always send welcome on first message, then include user's message in history
         reply = WELCOME_MESSAGE;
         await fileMemory.save(chatId, [
           { role: 'user',      content: text },

@@ -1,0 +1,73 @@
+# ── Stack de producción self-hosted (VPS) ────────────────────────────────────
+# Levanta TODO: base de datos + backend + frontend detrás de Caddy.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Lo único público es Caddy (puerto 80). El backend y Postgres solo son
+# accesibles dentro de la red interna de Docker.
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      API_KEY_MANAGER: ${API_KEY_MANAGER}
+      API_KEY_AGENT: ${API_KEY_AGENT}
+      API_KEY_ASSISTANT: ${API_KEY_ASSISTANT}
+      API_KEY_SYSTEM: ${API_KEY_SYSTEM}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENABLE_PRIVACY_ENGINE: ${ENABLE_PRIVACY_ENGINE:-true}
+      ENABLE_AUDIT: ${ENABLE_AUDIT:-true}
+      ENABLE_WAITLIST: ${ENABLE_WAITLIST:-true}
+      ENABLE_PAYMENTS: ${ENABLE_PAYMENTS:-false}
+      MOCK_PAYMENTS: ${MOCK_PAYMENTS:-false}
+      CANCELLATION_WINDOW_HOURS: ${CANCELLATION_WINDOW_HOURS:-24}
+      ADMIN_PHONE: ${ADMIN_PHONE:-}
+      ASSISTANT_PHONE: ${ASSISTANT_PHONE:-}
+    # Aplica migraciones y arranca. NO expone puerto al host: solo Caddy lo alcanza.
+    command: sh -c "npx prisma migrate deploy && node dist/main"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '80:80'
+      # Descomenta para HTTPS (ver instrucciones en Caddyfile):
+      # - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:

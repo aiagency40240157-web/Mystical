@@ -12,6 +12,7 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import { api } from '@/lib/api';
 import { getRole } from '@/lib/auth';
@@ -58,6 +59,7 @@ const pillStyle: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [financial, setFinancial] = useState<FinancialSummary | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -65,6 +67,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [month, setMonth] = useState(() => new Date());
   const [role, setRole] = useState('');
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   useEffect(() => {
     setRole(getRole() ?? '');
@@ -257,12 +260,14 @@ export default function DashboardPage() {
                 const dayAppts = byDay.get(key) ?? [];
                 const inMonth = isSameMonth(day, month);
                 const isToday = isSameDay(day, today);
+                const hasAppts = dayAppts.length > 0;
                 return (
                   <div
                     key={key}
-                    className={`min-h-[7rem] border-b border-r border-slate-100 p-1.5 align-top ${
+                    onClick={() => hasAppts && setSelectedDay(key)}
+                    className={`min-h-[7rem] border-b border-r border-slate-100 p-1.5 align-top transition-colors ${
                       inMonth ? 'bg-white' : 'bg-slate-50'
-                    }`}
+                    } ${hasAppts ? 'cursor-pointer hover:bg-indigo-50' : ''}`}
                   >
                     <div className="flex justify-end">
                       <span
@@ -290,7 +295,7 @@ export default function DashboardPage() {
                         </div>
                       ))}
                       {dayAppts.length > 3 && (
-                        <div className="text-[11px] text-slate-500 px-1">+{dayAppts.length - 3} more</div>
+                        <div className="text-[11px] font-medium text-indigo-500 px-1">+{dayAppts.length - 3} more</div>
                       )}
                     </div>
                   </div>
@@ -309,6 +314,70 @@ export default function DashboardPage() {
           </div>
         </>
       )}
+
+      {selectedDay && (() => {
+        const modalAppts = byDay.get(selectedDay) ?? [];
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setSelectedDay(null)}
+          >
+            <div
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <h3 className="font-semibold text-slate-900 text-base">
+                  {format(new Date(selectedDay + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
+                </h3>
+                <button
+                  onClick={() => setSelectedDay(null)}
+                  className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+                {modalAppts.map((a) => (
+                  <div key={a.id} className="flex items-start gap-3 px-5 py-3">
+                    <div className="text-sm font-mono text-slate-500 w-10 pt-0.5 shrink-0">
+                      {format(new Date(a.startTime), 'HH:mm')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {a.client.firstName} {a.client.lastName}
+                      </p>
+                      {a.service && (
+                        <p className="text-xs text-slate-500 truncate">{a.service.name}</p>
+                      )}
+                    </div>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${pillStyle[a.status] ?? 'bg-slate-100 text-slate-700'}`}>
+                      {a.status.replace(/_/g, ' ')}
+                    </span>
+                    <button
+                      onClick={() => router.push(`/appointments?id=${a.id}`)}
+                      className="text-indigo-500 hover:text-indigo-700 text-xs shrink-0"
+                      title="View appointment"
+                    >
+                      →
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-slate-100 flex justify-between items-center">
+                <span className="text-xs text-slate-400">{modalAppts.length} appointment{modalAppts.length !== 1 ? 's' : ''}</span>
+                <button
+                  onClick={() => router.push(`/appointments/new?date=${selectedDay}`)}
+                  className="text-xs text-indigo-600 hover:underline font-medium"
+                >
+                  + New appointment
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </AppLayout>
   );
 }

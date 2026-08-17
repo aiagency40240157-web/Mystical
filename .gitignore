@@ -56,3 +56,13 @@ frontend/.next/
 frontend/frontend-output.txt
 frontend/*.log
 .firebase/
+
+# Root screenshots / scratch (do not publish to the public repo)
+/*.png
+.playwright-mcp/
+
+# Bot session data (may contain patient PII / conversation history)
+chatbot-mvp/data/
+
+# Production env file (only the .example template is tracked)
+.env.prod

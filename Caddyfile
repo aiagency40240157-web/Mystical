@@ -1,0 +1,30 @@
+# ── Mystical reverse proxy ───────────────────────────────────────────────────
+#
+# HTTP mode (arranque por IP). Sirve el frontend estático y hace de proxy
+# de /api hacia el backend NestJS. El backend NO se expone directamente:
+# solo Caddy es público.
+#
+# ▶ Para activar HTTPS GRATIS sin comprar dominio:
+#   1) Cambia la primera línea `:80 {` por un hostname que resuelva a tu IP:
+#      - Hostinger ya te da uno: `srvXXXXXXX.hstgr.cloud {`  ← úsalo directamente
+#      - O usa sslip.io:  `TU-IP-CON-GUIONES.sslip.io {`  (ej: 203-0-113-45.sslip.io)
+#   2) En docker-compose.prod.yml, publica también el puerto 443 en el
+#      servicio `web`:  - '443:443'
+#   3) docker compose -f docker-compose.prod.yml up -d
+#   Caddy pedirá un certificado real de Let's Encrypt automáticamente.
+#
+:80 {
+	encode gzip
+
+	# API → backend NestJS (mismo network de Docker Compose)
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	# Todo lo demás → sitio estático de Next.js
+	handle {
+		root * /srv
+		try_files {path} {path}.html {path}/index.html /index.html
+		file_server
+	}
+}

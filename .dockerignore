@@ -1,0 +1,24 @@
+# Backend build context — keep only what `nest build` + `prisma generate` need.
+.git
+node_modules
+frontend
+chatbot-mvp
+dist
+coverage
+progress
+docs
+docker
+.firebase
+.playwright-mcp
+# Never leak local env/secrets into the image build context
+.env
+.env.local
+.env.*.local
+.env.prod
+# Logs & scratch
+*.log
+backend-output.txt
+backend-live.log
+chatbot-output.txt
+chatbot-error.txt
+*.png

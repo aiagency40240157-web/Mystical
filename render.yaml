@@ -34,5 +34,15 @@ services:
         value: "true"
       - key: ENABLE_PAYMENTS
         value: "false"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_SUCCESS_URL
+        value: https://mystical-backend-eaf6.onrender.com/api/payments/success
+      - key: STRIPE_CANCEL_URL
+        value: https://mystical-backend-eaf6.onrender.com/api/payments/cancel
+      - key: MOCK_PAYMENTS
+        value: "false"
       - key: CANCELLATION_WINDOW_HOURS
         value: "24"

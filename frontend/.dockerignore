@@ -1,0 +1,6 @@
+node_modules
+.next
+out
+*.log
+.env.local
+# NOTE: .env.production IS needed at build time (bakes NEXT_PUBLIC_API_URL) — do not ignore it.
