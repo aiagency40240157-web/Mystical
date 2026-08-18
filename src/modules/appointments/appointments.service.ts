@@ -288,9 +288,19 @@ export class AppointmentsService {
   }
 
   async getPendingReminders(window: '24h' | '5h') {
-    const ms = window === '24h' ? 24 * 60 * 60 * 1000 : 5 * 60 * 60 * 1000;
-    const target = new Date(Date.now() + ms);
-    const tolerance = 5 * 60 * 1000;
+    // Reminder offsets/tolerance are env-configurable (in minutes) so the timing
+    // can be shrunk for live demos without a code change. Defaults preserve prod
+    // behavior: 24h / 5h before the appointment, ±5 min tolerance.
+    const envInt = (v: string | undefined, def: number) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    const offsetMin =
+      window === '24h'
+        ? envInt(process.env.REMINDER_24H_MINUTES, 24 * 60)
+        : envInt(process.env.REMINDER_5H_MINUTES, 5 * 60);
+    const target = new Date(Date.now() + offsetMin * 60_000);
+    const tolerance = envInt(process.env.REMINDER_TOLERANCE_MINUTES, 5) * 60_000;
     const where =
       window === '24h'
         ? {
