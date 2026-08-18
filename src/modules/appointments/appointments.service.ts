@@ -8,6 +8,7 @@ import { AuditService } from '../audit/audit.service';
 import { ClientsService } from '../clients/clients.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import {
   pacificMinutesSinceMidnight,
   pacificDateString,
@@ -336,6 +337,18 @@ export class AppointmentsService {
     });
     if (!appointment) throw new NotFoundException('Invalid request');
     return appointment;
+  }
+
+  async updateDetails(id: string, dto: UpdateAppointmentDto) {
+    await this.findOne(id);
+    return this.prisma.appointment.update({
+      where: { id },
+      data: { serviceId: dto.serviceId ?? null },
+      include: {
+        client: { select: { firstName: true, lastName: true } },
+        service: { select: { name: true, category: true, price: true, durationMins: true } },
+      },
+    });
   }
 
   async getAvailability(date: string, clientId?: string): Promise<string[]> {

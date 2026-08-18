@@ -33,6 +33,7 @@ function EditClientForm() {
   const [saving, setSaving]               = useState(false);
   const [error, setError]                 = useState('');
   const [success, setSuccess]             = useState(false);
+  const [deleting, setDeleting]           = useState(false);
 
   useEffect(() => {
     api.get<ClientData>(`/clients/${id}`)
@@ -71,6 +72,19 @@ function EditClientForm() {
       setError('No se pudieron guardar los cambios.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm('¿Borrar este cliente de forma permanente?')) return;
+    setError('');
+    setDeleting(true);
+    try {
+      await api.delete(`/clients/${id}`);
+      router.push('/clients');
+    } catch {
+      setError('No se pudo borrar. Si el cliente tiene citas, cancélalas primero.');
+      setDeleting(false);
     }
   }
 
@@ -216,6 +230,17 @@ function EditClientForm() {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-red-600 hover:text-red-800 disabled:text-red-300 text-sm font-medium"
+          >
+            {deleting ? 'Borrando...' : 'Borrar cliente'}
+          </button>
         </div>
       </div>
   );

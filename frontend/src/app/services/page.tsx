@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
 import { api } from '@/lib/api';
 
@@ -20,8 +21,8 @@ function formatPrice(cents: number) {
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<Service[]>('/services')
@@ -29,6 +30,20 @@ export default function ServicesPage() {
       .catch(() => setError('No se pudieron cargar los servicios.'))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleDelete(s: Service) {
+    if (!confirm(`¿Borrar el servicio "${s.name}"? Dejará de aparecer en el catálogo.`)) return;
+    setError('');
+    setDeletingId(s.id);
+    try {
+      await api.delete(`/services/${s.id}`);
+      setServices(prev => prev.filter(x => x.id !== s.id));
+    } catch {
+      setError('No se pudo borrar el servicio.');
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const byCategory = services.reduce<Record<string, Service[]>>((acc, s) => {
     if (!acc[s.category]) acc[s.category] = [];
@@ -39,9 +54,17 @@ export default function ServicesPage() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-800">Servicios</h1>
-          <p className="text-slate-500 text-sm mt-1">Munay Bliss LLC — Love Life Coaching & Holistic Services</p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Servicios</h1>
+            <p className="text-slate-500 text-sm mt-1">Munay Bliss LLC — Love Life Coaching &amp; Holistic Services</p>
+          </div>
+          <Link
+            href="/services/new"
+            className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            + Nuevo servicio
+          </Link>
         </div>
 
         {error && (
@@ -65,17 +88,32 @@ export default function ServicesPage() {
                   {items.map(s => {
                     const priceLabel = formatPrice(s.price);
                     return (
-                      <div key={s.id} className="flex items-center justify-between px-5 py-4">
-                        <div>
-                          <p className="font-medium text-slate-800">{s.name}</p>
+                      <div key={s.id} className="flex items-center justify-between px-5 py-4 gap-4">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-800 truncate">{s.name}</p>
                           {s.durationMins > 0 && (
                             <p className="text-xs text-slate-400 mt-0.5">{s.durationMins} min</p>
                           )}
                         </div>
-                        {priceLabel
-                          ? <span className="text-lg font-bold text-indigo-600">{priceLabel}</span>
-                          : <span className="text-sm text-slate-400 italic">Preguntar en oficina</span>
-                        }
+                        <div className="flex items-center gap-4 shrink-0">
+                          {priceLabel
+                            ? <span className="text-lg font-bold text-indigo-600">{priceLabel}</span>
+                            : <span className="text-sm text-slate-400 italic">Preguntar en oficina</span>
+                          }
+                          <Link
+                            href={`/services/edit?id=${s.id}`}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                          >
+                            Editar
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(s)}
+                            disabled={deletingId === s.id}
+                            className="text-red-500 hover:text-red-700 disabled:text-red-300 text-sm font-medium"
+                          >
+                            {deletingId === s.id ? 'Borrando...' : 'Borrar'}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

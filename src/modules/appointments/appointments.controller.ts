@@ -4,6 +4,7 @@ import { AppointmentsService } from './appointments.service';
 import { BookViaBotDto } from './dto/book-via-bot.dto';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -55,6 +56,12 @@ export class AppointmentsController {
   @Roles('MANAGER', 'AGENT', 'ASSISTANT', 'SYSTEM')
   findOne(@Param('id') id: string) {
     return this.appointmentsService.findOne(id);
+  }
+
+  @Patch(':id')
+  @Roles('MANAGER', 'AGENT')
+  updateDetails(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
+    return this.appointmentsService.updateDetails(id, dto);
   }
 
   @Put('reschedule')

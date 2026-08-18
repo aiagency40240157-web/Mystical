@@ -130,6 +130,12 @@ export default function AppointmentsPage() {
                           >
                             Reschedule
                           </Link>
+                          <Link
+                            href={`/appointments/edit?id=${appt.id}`}
+                            className="text-slate-600 hover:text-slate-900 font-medium"
+                          >
+                            Editar
+                          </Link>
                         </>
                       ) : (
                         <span className="text-slate-400">—</span>

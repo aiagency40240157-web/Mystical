@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -36,5 +36,11 @@ export class ClientsController {
   @Roles('MANAGER', 'AGENT')
   update(@Param('id') id: string, @Body() dto: UpdateClientDto) {
     return this.clientsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles('MANAGER')
+  remove(@Param('id') id: string) {
+    return this.clientsService.remove(id);
   }
 }
